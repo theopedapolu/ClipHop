@@ -1,2 +1,2 @@
 # ClipHop
-Utility app to synchronize the clipboard across multiple devices on the same entwork
+Utility app to synchronize the clipboard across multiple devices on the same network
