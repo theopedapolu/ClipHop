@@ -13,11 +13,19 @@ const iconMap = {
     'E':PC
 }
 
-function Device({deviceType='D',color='sky-400',top="1/2",left="1/2"}) {
+function Device({deviceType='B',color='sky-400',top="1/2",left="1/2"}) {
     const DeviceIcon = iconMap[deviceType];
     return (
-        <div className={`absolute flex items-center justify-center rounded-full bg-${color} w-[4.3rem] h-[4.3rem] drop-shadow-2xl top-${top} left-${left} -translate-x-1/2 -translate-y-1/2`}>
+        <div className='absolute top-1 left-1/2 flex bg-amber-400'>
+        <div className={`absolute z-20 rounded-full flex items-center justify-center bg-${color} w-[4.3rem] h-[4.3rem] -translate-x-[3.7rem]`}>
         <DeviceIcon/>
+        </div>
+        <div className={`absolute z-10 rounded-full flex items-center justify-center bg-${color} w-[4.3rem] h-[4.3rem]`}>
+        <DeviceIcon/>
+        </div>
+        <div className={`absolute z-0 rounded-full flex items-center justify-center bg-${color} w-[4.3rem] h-[4.3rem] -translate-x-[1.85rem] -translate-y-[3.2rem]`}>
+        <DeviceIcon/>
+        </div>
         </div>
     )
 }

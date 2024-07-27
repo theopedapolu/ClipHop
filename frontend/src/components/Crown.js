@@ -5,6 +5,8 @@ import { useState } from 'react';
 
 function Crown() {
     const [clockColor,setClockColor] = useState("black");
+    const [deviceGroups, setDevices] = useState();
+
     return (
         <div className='relative h-[30rem] mt-10'>
             <Clock color={`${clockColor}`}/>
