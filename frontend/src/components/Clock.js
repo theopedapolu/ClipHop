@@ -3,13 +3,13 @@ import React from 'react';
 {/* <svg className="absolute top-1/2 left-1/2 sync-logo" width="40rem" height="40rem" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M14.3935 5.37371C18.0253 6.70569 19.8979 10.7522 18.5761 14.4118C17.6363 17.0135 15.335 18.7193 12.778 19.0094M12.778 19.0094L13.8253 17.2553M12.778 19.0094L14.4889 20M9.60651 18.6263C5.97465 17.2943 4.10205 13.2478 5.42394 9.58823C6.36371 6.98651 8.66504 5.28075 11.222 4.99059M11.222 4.99059L10.1747 6.74471M11.222 4.99059L9.51114 4" stroke="#FEBF55" stroke-linecap="round" stroke-linejoin="round"/>
     </svg> */}
-function Clock() {
+function Clock({color='black'}) {
 return (
     <svg className="absolute top-1/2 left-1/2 sync-logo" version="1.0" xmlns="http://www.w3.org/2000/svg"
- width="25rem" height="25rem" viewBox="0 0 300.000000 300.000000"
+ width="30rem" height="30rem" viewBox="0 0 300.000000 300.000000"
  preserveAspectRatio="xMidYMid meet">
 <g transform="translate(0.000000,300.000000) scale(0.100000,-0.100000)"
-fill="black" stroke="none">
+fill={`${color}`} stroke="none">
 <path d="M1360 2990 c-331 -23 -669 -181 -919 -431 -211 -212 -350 -472 -411
 -769 -31 -150 -31 -430 0 -580 92 -452 376 -829 780 -1039 133 -69 252 -111
 400 -141 150 -31 430 -31 580 0 148 30 267 72 400 141 404 210 688 587 780
