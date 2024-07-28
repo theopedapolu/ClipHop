@@ -13,6 +13,10 @@ const iconMap = {
     'E':PC
 }
 
+function getShifts(numDevices) {
+    
+}
+
 function Device({deviceType='B',color='sky-400',top="1/2",left="1/2"}) {
     const DeviceIcon = iconMap[deviceType];
     return (

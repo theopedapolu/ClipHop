@@ -4,7 +4,6 @@ import iPhone from './icons/iPhone.js';
 import iPad from './icons/iPad.js';
 import Android from './icons/Android.js';
 import PC from './icons/PC.js';
-import { useState } from "react";
 
 const iconMap = {
     'A': Android,
@@ -14,13 +13,15 @@ const iconMap = {
     'E':PC
 }
 
-function DeviceGroup({color,top,left}) {
-    const [devices,setDevices] = useState([{
-        name:"skynet",
-        type:"Mac"
-    }]);
+function DeviceGroup({color="green-500",top,left}) {
+    // const [devices,setDevices] = useState([{
+    //     name:"skynet",
+    //     type:"Mac"
+    // }]);
     return (
-        f
+        <div className={`absolute z-20 rounded-full flex items-center justify-center bg-${color} w-[4.3rem] h-[4.3rem] -translate-x-[3.7rem]`}>
+        <Android/>
+        </div>
     ) 
 }
 
