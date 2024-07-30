@@ -5,8 +5,8 @@ import React from 'react';
     </svg> */}
 function Clock({color='black'}) {
 return (
-    <svg className="absolute top-1/2 left-1/2 sync-logo" version="1.0" xmlns="http://www.w3.org/2000/svg"
- width="30rem" height="30rem" viewBox="0 0 300.000000 300.000000"
+    <svg className="absolute top-1/2 left-1/2 h-full sync-logo" version="1.0" xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 300.000000 300.000000"
  preserveAspectRatio="xMidYMid meet">
 <g transform="translate(0.000000,300.000000) scale(0.100000,-0.100000)"
 fill={`${color}`} stroke="none">
