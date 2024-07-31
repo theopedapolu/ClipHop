@@ -23,7 +23,7 @@ function DndIcon({iconId,children,top,left}) {
                 setDragRef(node);
                 setDropRef(node);
               }}
-        style={{...style,position:'absolute',top:`${top}rem`,left:`${left}rem`}} 
+        style={{...style,position:'absolute',top:`${top}rem`,left:`${left}rem`,border:isOver ? '1px solid red' : 'none'}} 
         {...listeners}
         {... attributes} >
             {children}

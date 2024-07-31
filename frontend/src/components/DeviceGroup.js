@@ -14,18 +14,19 @@ const iconMap = {
     'E':PC
 }
 
-function DeviceGroup({devices,color="green-500"}) {
+function DeviceGroup({devices, color="green-500"}) {
     return (
-        devices.map(device => {
-            const DeviceIcon = iconMap[device.type];
-            return (
-                <div key={device.id} className={`absolute z-20 rounded-full flex items-center justify-center bg-${color} w-[4.3rem] h-[4.3rem] -translate-x-1/2 -translate-y-1/2`}>
-                <DeviceIcon/>
-                </div>
-            )
-        })
-        
-    ) 
+        <>
+            {devices.map(device => {
+                const DeviceIcon = iconMap[device.type];
+                return (
+                    <div key={device.id} className={`rounded-full flex items-center justify-center bg-${color} w-[4.3rem] h-[4.3rem]`}>
+                        <DeviceIcon/>
+                    </div>
+                )
+            })}
+        </>
+    )
 }
 
 export default DeviceGroup;
