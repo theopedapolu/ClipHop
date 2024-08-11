@@ -2,7 +2,7 @@ import React from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { useDroppable } from "@dnd-kit/core";
 
-function DndIcon({iconId,children,top,left}) {
+function DndIcon({iconId,bubble,children,top,left}) {
     // Draggable state
     const {attributes, listeners, setNodeRef: setDragRef, transform} = useDraggable({
         id:iconId
@@ -19,11 +19,12 @@ function DndIcon({iconId,children,top,left}) {
     });
 
     return (
-        <div ref={node => {
+        <div ref={node => { 
                 setDragRef(node);
                 setDropRef(node);
               }}
-        style={{...style,position:'absolute',top:`${top}rem`,left:`${left}rem`,border:isOver ? '1px solid red' : 'none'}} 
+        style={{...style,position:'absolute',top:`${top}rem`,left:`${left}rem`,touchAction:'none'}} 
+        className={`rounded-full p-6 ${bubble ? 'bubble-group' : ''}`}
         {...listeners}
         {... attributes} >
             {children}
