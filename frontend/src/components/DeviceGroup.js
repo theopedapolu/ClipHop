@@ -19,7 +19,7 @@ function DeviceGroup({devices, color="bg-green-500"}) {
             {devices.map(device => {
                 const DeviceIcon = iconMap[device.type];
                 return (
-                    <div key={device.id} className={`rounded-full flex items-center justify-center ${color} p-3`}>
+                    <div key={device.name} className={`rounded-full flex items-center justify-center ${color} p-3`}>
                         <DeviceIcon/>
                     </div>
                 )

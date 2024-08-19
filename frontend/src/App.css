@@ -9,7 +9,7 @@
 
 @media (prefers-reduced-motion: no-preference) {
   .spin-logo {
-    animation: spin infinite 10s linear;
+    animation: spin infinite 15s linear;
   }
 }
 
