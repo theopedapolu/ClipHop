@@ -1,8 +1,14 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState, useRef} from 'react';
 import Clock from './Clock';
 import DeviceGroup from './DeviceGroup';
 import {DndContext, useDndMonitor} from '@dnd-kit/core';
 import DndIcon from './DnDIcon';
+
+const Message = Object.freeze({
+    CONNECTION: 'Connection',
+    UPDATE: 'Update',
+    CLOSE_DEVICE: 'Close Device'
+})
 
 const colors = ['bg-emerald-500','bg-sky-500','bg-rose-500','bg-amber-500','bg-violet-500'];
 
@@ -21,9 +27,20 @@ function generatePositions(numGroups) {
     return positions;
 }
 
+
+
 function Crown() {
+    // Hooks & State
     const [spinClock,setSpinClock] = useState(true);
-    
+    const connection = useRef(null);
+    useEffect(() => {
+        const ws = new WebSocket('ws://localhost:8080');
+        ws.onopen = () => (sendMessage(Message.CONNECTION,{text:"Device connected successfully"}));
+        ws.onmessage = handleMessage;
+        ws.onclose = onClose;
+        connection.ws = ws;
+    },[])
+
     const [deviceGroups, setDeviceGroups] = useState([
         {id:1,color:'bg-emerald-500',devices:[{name:'skynet', type:'A'}],bubble:false},
         // {id:2,color:'bg-blue-500',devices:[{name:'sky',type:'B'}],bubble:false},
@@ -31,7 +48,7 @@ function Crown() {
         // {id:4,color:'bg-emerald-500',devices:[{name:'skynets', type:'D'}],bubble:false}
     ]);
 
-    
+    // State Change Helper methods
     const addDeviceGroup = (name,type) => {
         let newId = 1;
         for (let group of deviceGroups) {
@@ -64,6 +81,30 @@ function Crown() {
 
     };
 
+    // Websocket handlers
+    function sendMessage(type,data) {
+        const message = {type, data}
+        connection.ws.send(JSON.stringify(message));
+    }
+    
+    function handleMessage(event) {
+        const {type,message} = JSON.parse(event.data);
+        switch(type) {
+            case Message.UPDATE:
+                break;
+            case Message.CLOSE_DEVICE:
+                break;   
+            default:
+                console.warn(`Unhandled message type: ${type}`);
+        }
+    }
+    
+    function onClose(event) {
+    
+    }
+
+
+    // Drag & Drop event handlers
     let positions = generatePositions(deviceGroups.length);
 
     function handleDragOver(event) {
@@ -98,7 +139,7 @@ function Crown() {
         })
     }
 
-
+    // Rendered JSX
     return (
         <div className='flex flex-col items-center w-full min-w-full max-w-full overflow-x-clip mt-5'>
         <div className='relative w-[90vmin] h-[90vmin] md:w-[35rem] md:h-[35rem]'>
