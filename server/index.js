@@ -1,8 +1,15 @@
 import {WebSocketServer} from 'ws';
-import {uniqueNamesGenerator,adjectives,animals} from 'unique-names-generator'
+import {uniqueNamesGenerator,adjectives,animals} from 'unique-names-generator';
+
 const config = {
-    dictionaries: [adjectives,animals]
-}
+    dictionaries: [adjectives,animals];
+};
+
+const Message = Object.freeze({
+    CONNECTION: 'Connection',
+    UPDATE: 'Update', 
+    CLOSE_DEVICE: 'Close Device'
+});
 
 class ClipHopServer {
     constructor(port) {
@@ -20,22 +27,37 @@ class ClipHopServer {
         } else {
             this.ipToDeviceList.set(device.ip,[device]);
         }
-        ws.send("Device connected successfully")
         console.log(device.userAgent)
-        ws.on('message', (data) => (this.onMessage(device, data)));
+        ws.on('message', (event) => (this.onMessage(device, event)));
         ws.on('error', console.error);
-        
     }
 
-    onMessage(ws, data) {
-        //
+    onMessage(device, event) {
+        const {type,message} = JSON.parse(event.data)
+        switch (type) {
+            case Message.CONNECTION:
+                
+                break;
+            case Message.UPDATE:
+                break;
+            default:
+        }
+
         console.log(data);
     }
 
-    Message(data) {
-
+    sendMessage(clientSocket,type,data) {
+        const message = {type, data};
+        clientSocket.send(JSON.stringify(message));
     }
 
+    broadcastMessage(device,type,data) {
+        for (peerDevice of this.ipToDeviceList.get(device.ip)) {
+            if (peerDevice.name !== device.name) {
+                this.sendMessage(peerDevice.socket,type,data);
+            }
+        }
+    }
 }
 
 
