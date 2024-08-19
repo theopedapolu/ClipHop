@@ -1,4 +1,8 @@
-import { WebSocketServer} from "ws"   
+import {WebSocketServer} from 'ws';
+import {uniqueNamesGenerator,adjectives,animals} from 'unique-names-generator'
+const config = {
+    dictionaries: [adjectives,animals]
+}
 
 class ClipHopServer {
     constructor(port) {
@@ -16,11 +20,9 @@ class ClipHopServer {
         } else {
             this.ipToDeviceList.set(device.ip,[device]);
         }
-        
-        ws.send("New Device Connected")
+        ws.send("Device connected successfully")
         console.log(device.userAgent)
-        console.log(typeof device.ip)
-        ws.on('message', (data) => (this.onMessage(ws, data)));
+        ws.on('message', (data) => (this.onMessage(device, data)));
         ws.on('error', console.error);
         
     }
@@ -40,10 +42,11 @@ class ClipHopServer {
 class Device {
     constructor(ws, request) {
         this.socket = ws;
+        this.name = uniqueNamesGenerator(config);
         this.ip = request.socket.remoteAddress;
         this.userAgent = request.headers['user-agent'];
         this.connectionTime = new Date();
     }
 }
 
-const clipServer = new ClipHopServer(8080)
+const server = new ClipHopServer(8080);

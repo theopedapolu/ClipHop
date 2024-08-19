@@ -1,6 +1,7 @@
 {
   "type": "module",
   "dependencies": {
+    "unique-names-generator": "^4.7.1",
     "ws": "^8.16.0"
   }
 }
