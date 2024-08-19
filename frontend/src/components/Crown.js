@@ -25,10 +25,10 @@ function Crown() {
     const [spinClock,setSpinClock] = useState(true);
     
     const [deviceGroups, setDeviceGroups] = useState([
-        {id:1,color:'bg-rose-500',devices:[{name:'skynet', type:'A'}],bubble:false},
-        {id:2,color:'bg-blue-500',devices:[{name:'sky',type:'B'}],bubble:false},
-        {id:3,color:'bg-amber-500',devices:[{name:'skys',type:'C'}],bubble:false},
-        {id:4,color:'bg-emerald-500',devices:[{name:'skynets', type:'D'}],bubble:false}
+        {id:1,color:'bg-emerald-500',devices:[{name:'skynet', type:'A'}],bubble:false},
+        // {id:2,color:'bg-blue-500',devices:[{name:'sky',type:'B'}],bubble:false},
+        // {id:3,color:'bg-amber-500',devices:[{name:'skys',type:'C'}],bubble:false},
+        // {id:4,color:'bg-emerald-500',devices:[{name:'skynets', type:'D'}],bubble:false}
     ]);
 
     
