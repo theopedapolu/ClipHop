@@ -2,60 +2,70 @@ import {WebSocketServer} from 'ws';
 import {uniqueNamesGenerator,adjectives,animals} from 'unique-names-generator';
 
 const config = {
-    dictionaries: [adjectives,animals];
+    dictionaries: [adjectives,animals]
 };
 
 const Message = Object.freeze({
     CONNECTION: 'Connection',
-    UPDATE: 'Update', 
+    ADD_DEVICE: 'Add Device',
+    UPDATE: 'Update',
     CLOSE_DEVICE: 'Close Device'
-});
+})
 
 class ClipHopServer {
     constructor(port) {
         this.wss = new WebSocketServer({port:port})
         this.wss.on('connection', (ws, request) => this.onConnection(ws, request))
-        this.ipToDeviceList = new Map();
+        this.ipToGroupsList = new Map();
         //this.wss.on('headers', (headers, request) => this.checkHeaders(headers, request))
         console.log('ClipHop is running on port', port)
     }
 
     onConnection(ws, request) {
         var device = new Device(ws, request);
-        if (this.ipToDeviceList.has(device.ip)) {
-            this.ipToDeviceList.get(device.ip).push(device);
+        if (this.ipToGroupsList.has(device.ip)) {
+            this.ipToGroupsList.get(device.ip).push(device);
         } else {
-            this.ipToDeviceList.set(device.ip,[device]);
+            this.ipToGroupsList.set(device.ip,[device]);
         }
         console.log(device.userAgent)
-        ws.on('message', (event) => (this.onMessage(device, event)));
-        ws.on('error', console.error);
+        ws.onmessage = (event) => (this.onMessage(device, event));
+        ws.onerror =  () => console.error;
+        console.log('Finished connection')
+        console.log(this.ipToGroupsList.get(device.ip).length)
     }
 
     onMessage(device, event) {
-        const {type,message} = JSON.parse(event.data)
+        console.log('This is the event',event.data);
+        const {type, message} = JSON.parse(event.data);
+        let data = null;
         switch (type) {
             case Message.CONNECTION:
-                
+                data = {name:device.name, type:'A'};
+                console.log(data);
+                this.broadcastMessage(device,Message.ADD_DEVICE,data);
                 break;
             case Message.UPDATE:
+                data = {id1:message.id1,id2:message.id2};
+                this.broadcastMessage(device,Message.UPDATE,data);
+                break;
+            case Message.CLOSE_DEVICE:
+                data = {name:message.name};
+                console.log('Closed device')
                 break;
             default:
+                console.warn(`Unhandled message type: ${type}`);
         }
-
-        console.log(data);
     }
 
-    sendMessage(clientSocket,type,data) {
-        const message = {type, data};
-        clientSocket.send(JSON.stringify(message));
+    sendMessage(clientSocket,type,message) {
+        const data = {type, message};
+        clientSocket.send(JSON.stringify(data));
     }
 
-    broadcastMessage(device,type,data) {
-        for (peerDevice of this.ipToDeviceList.get(device.ip)) {
-            if (peerDevice.name !== device.name) {
-                this.sendMessage(peerDevice.socket,type,data);
-            }
+    broadcastMessage(device,type,message) {
+        for (let peerDevice of this.ipToGroupsList.get(device.ip)) {
+            this.sendMessage(peerDevice.socket,type,message);
         }
     }
 }

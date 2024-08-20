@@ -5,7 +5,7 @@ import React from 'react';
     </svg> */}
 function Clock({spin=true,color='black'}) {
 return (
-    <svg className={`absolute top-1/2 left-1/2 w-full ${spin ? 'spin-logo':''}`} version="1.0" xmlns="http://www.w3.org/2000/svg"
+    <svg className={`absolute top-1/2 left-1/2 w-full translate-x-[-50%] translate-y-[-50%] ${spin ? 'spin-logo':''}`} version="1.0" xmlns="http://www.w3.org/2000/svg"
      viewBox="0 0 300.000000 300.000000"
  preserveAspectRatio="xMidYMid meet">
 <g transform="translate(0.000000,300.000000) scale(0.100000,-0.100000)"
