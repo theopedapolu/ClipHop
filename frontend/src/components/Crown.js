@@ -7,7 +7,9 @@ import DndIcon from './DnDIcon';
 const Message = Object.freeze({
     CONNECTION: 'Connection',
     ADD_DEVICE: 'Add Device',
-    UPDATE: 'Update',
+    MERGE_GROUPS: 'Merge Groups',
+    UPDATE_CLIPBOARD: 'Update Clipboard',
+    GET_CLIPBOARD: 'Get Clipboard',
     CLOSE_DEVICE: 'Close Device'
 })
 
@@ -38,60 +40,62 @@ function Crown() {
     connection.type = "";
     useEffect(() => {
         const ws = new WebSocket('ws://localhost:8080');
-        console.log('hi')
         ws.onopen = () => {sendMessage(Message.CONNECTION,{text:"Device connected successfully"})};
         ws.onmessage = handleMessage;
         ws.onclose = onClose;
         connection.ws = ws;
-        return onClose;
     },[])
 
     const [deviceGroups, setDeviceGroups] = useState([]);
 
     // State Change Helper methods
     const addDeviceGroup = (name,type) => {
-        let newId = 1;
-        for (let group of deviceGroups) {
-            if (group.id !== newId) {
-                break;
+        setDeviceGroups(deviceGroups => {
+            let newId = 1;
+            for (let group of deviceGroups) {
+                if (group.id !== newId) {
+                    break;
+                }
+                newId += 1;
             }
-            newId += 1;
-        }
-        console.log('add device',deviceGroups)
-        setDeviceGroups([...deviceGroups, {id:newId, color:colors[newId-1], devices:[{name:name,type:type}], bubble:false}]);
+            return [...deviceGroups, {id:newId, color:colors[newId-1], devices:[{name:name,type:type}], bubble:false}]
+        });
     };
 
     const mergeGroups = (id1,id2) => {
-        const updatedDeviceGroups = deviceGroups.reduce((acc, group) => {
-            if (group.id === id1) {
-                return acc; // Skip this group as it will be merged
-            } else if (group.id === id2) {
-                const group1 = deviceGroups.find(g => g.id === id1);
-                const mergedDevices = [...group.devices, ...group1.devices];
-                acc.push({...group, devices: mergedDevices});
-            } else {
-                acc.push(group);
+        setDeviceGroups(deviceGroups => {
+            let updatedGroups = [];
+            for (let group of deviceGroups) {
+                if (group.id === id2) {
+                    const group1 = deviceGroups.find(g => g.id === id1);
+                    const mergedDevices = [...group.devices, ...group1.devices];
+                    updatedGroups.push({...group, devices: mergedDevices});
+                } else if (group.id !== id1) { // Skip group id1 since it will be merged later
+                    updatedGroups.push(group);
+                }
             }
-            return acc;
-        }, []);
-
-        setDeviceGroups(updatedDeviceGroups);
+            return updatedGroups
+        });
     }
 
     const removeDevice = (name) => {
-        const newGroups = deviceGroups.reduce((acc,group) => {
-            let newDevices = group.devices.filter(device => device.name !== name);
-            if (newDevices.length > 0) {
-                acc.push({...group,devices:newDevices})
-            }
-            return acc;
-        },[]);
-
-        setDeviceGroups(newGroups);
+        setDeviceGroups(deviceGroups => {
+            deviceGroups.reduce((acc,group) => {
+                let newDevices = group.devices.filter(device => device.name !== name);
+                if (newDevices.length > 0) {
+                    acc.push({...group,devices:newDevices})
+                }
+                return acc;
+            },[]);
+        });
     };
 
+    const updateDeviceGroups = (groupsList) => {
+        
+    }
+
     // Websocket handlers
-    function sendMessage(type,message) {
+    async function sendMessage(type,message) {
         const data = {type, message}
         if (connection.ws && connection.ws.readyState === WebSocket.OPEN) {
             connection.ws.send(JSON.stringify(data));
@@ -100,16 +104,20 @@ function Crown() {
         }
     }
     
-    const handleMessage = (event) => {
+    function handleMessage(event) {
         const {type,message} = JSON.parse(event.data);
+        console.log(type,message)
         switch(type) {
             case Message.ADD_DEVICE:
-                addDeviceGroup(message.name, message.type);
+                if (connection.name !== message.name) {
+                    updateDeviceGroups(message);
+                }
                 if (!connection.name) {
                     connection.name = message.name;
-                } 
+                    connection.type = message.type;
+                }
                 break;
-            case Message.UPDATE:
+            case Message.MERGE_GROUPS:
                 mergeGroups(message.id1,message.id2);
                 break;
             case Message.CLOSE_DEVICE:
@@ -117,6 +125,7 @@ function Crown() {
                 break;   
             default:
                 console.warn(`Unhandled message type: ${type}`);
+            
         }
     }
     
@@ -129,8 +138,6 @@ function Crown() {
 
     // Drag & Drop event handlers
     function handleDragOver(event) {
-        console.log('Drag over event triggered');
-        console.log(event);
         if (event.over == null || event.over.id === event.active.id) {
             setDeviceGroups(deviceGroups.map((group) => {return {...group,color:colors[group.id-1],bubble:group.devices.length > 1}}))
         } else {
@@ -147,10 +154,9 @@ function Crown() {
     }
 
     function handleDragEnd(event) {
-        console.log('Drag end event')
         if (event.over !== null && event.over.id !== event.active.id) {
             mergeGroups(event.active.id,event.over.id);
-            let message = {id1:event.active.id, id2:event.over.id};
+            let message = {id1:event.active.id,id2:event.over.id};
             sendMessage(Message.UPDATE, message);
         }
     }
@@ -163,7 +169,6 @@ function Crown() {
     }
 
     
-
     const positions = useMemo(() => generatePositions(deviceGroups.length),[deviceGroups]);
 
     // Rendered JSX
@@ -174,7 +179,6 @@ function Crown() {
             <DndContext>
             <Monitor/>
             {deviceGroups.map((group,idx) => {
-                console.log(deviceGroups)
                 return (
                 <DndIcon iconId={group.id} key={idx} left={positions[idx][0]} top={positions[idx][1]} bubble={group.bubble}>
                 <DeviceGroup devices={group.devices} color={group.color}/>

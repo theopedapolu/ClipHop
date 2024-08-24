@@ -8,7 +8,9 @@ const config = {
 const Message = Object.freeze({
     CONNECTION: 'Connection',
     ADD_DEVICE: 'Add Device',
-    UPDATE: 'Update',
+    MERGE_GROUPS: 'Merge Groups',
+    UPDATE_CLIPBOARD: 'Update Clipboard',
+    GET_CLIPBOARD: 'Get Clipboard',
     CLOSE_DEVICE: 'Close Device'
 })
 
@@ -17,40 +19,50 @@ class ClipHopServer {
         this.wss = new WebSocketServer({port:port})
         this.wss.on('connection', (ws, request) => this.onConnection(ws, request))
         this.ipToGroupsList = new Map();
+        this.latestState = "";
         //this.wss.on('headers', (headers, request) => this.checkHeaders(headers, request))
         console.log('ClipHop is running on port', port)
     }
 
     onConnection(ws, request) {
-        var device = new Device(ws, request);
-        if (this.ipToGroupsList.has(device.ip)) {
-            this.ipToGroupsList.get(device.ip).push(device);
-        } else {
-            this.ipToGroupsList.set(device.ip,[device]);
+        var dev = new Device(ws, request);
+        if (!this.ipToGroupsList.has(dev.ip)) {
+            this.ipToGroupsList.set(dev.ip,[]);
         }
-        console.log(device.userAgent)
-        ws.onmessage = (event) => (this.onMessage(device, event));
+        // Find new group id and create new group
+        groupsList = this.ipToGroupsList.get(dev.ip);
+        newId = groupsList.findIndex((group,idx) => group.id !== idx+1);
+        newId = newId === -1 ? groupsList.length + 1 : newId + 1;
+        groupsList.push({groupId:newId,device:dev})
+
+        // Attach event listeners
+        ws.onmessage = (event) => (this.onMessage(dev, event));
         ws.onerror =  () => console.error;
-        console.log('Finished connection')
-        console.log(this.ipToGroupsList.get(device.ip).length)
     }
 
     onMessage(device, event) {
         console.log('This is the event',event.data);
         const {type, message} = JSON.parse(event.data);
-        let data = null;
         switch (type) {
             case Message.CONNECTION:
-                data = {name:device.name, type:'A'};
-                console.log(data);
-                this.broadcastMessage(device,Message.ADD_DEVICE,data);
+                groupsList = this.ipToGroupsList.get(device.ip)
+                newDeviceList = groupsList.map(dev => ({groupId,name:dev.name,type:'A'}))
+                message = {name:device.name,type:'A'}
+                this.broadcastMessage(device,Message.ADD_DEVICE,message,Message.ADD_DEVICE,newDeviceList);
                 break;
-            case Message.UPDATE:
-                data = {id1:message.id1,id2:message.id2};
-                this.broadcastMessage(device,Message.UPDATE,data);
+            case Message.MERGE_GROUPS:
+                groupsList = this.ipToGroupsList.get(device.ip)
+                for (let dev of groupsList) {
+                    if (dev.groupId === message.oldId) {
+                        dev.groupId = message.newId
+                    }
+                }
+                this.broadcastMessage(device,Message.MERGE_GROUPS,message);
                 break;
             case Message.CLOSE_DEVICE:
-                data = {name:message.name};
+                groupsList = this.ipToGroupsList.get(device.ip);
+                newDevicesList = groupsList.filter(dev.device.name !== message.name)
+                this.broadcastMessage(device,Message.CLOSE_DEVICE,message)
                 console.log('Closed device')
                 break;
             default:
@@ -63,9 +75,14 @@ class ClipHopServer {
         clientSocket.send(JSON.stringify(data));
     }
 
-    broadcastMessage(device,type,message) {
+    broadcastMessage(device,type,message,deviceType="",deviceMessage="") {
+        if (deviceType) {
+            this.sendMessage(device.socket,deviceType,deviceMessage);
+        }
         for (let peerDevice of this.ipToGroupsList.get(device.ip)) {
-            this.sendMessage(peerDevice.socket,type,message);
+            if (peerDevice.device.name !== device.name) {
+                this.sendMessage(peerDevice.socket,type,message);
+            }
         }
     }
 }
