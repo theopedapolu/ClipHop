@@ -18,3 +18,11 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+@font-face {
+  font-family: 'aberforthTiles';
+  src: url('../public/fonts/aberforth_tiles.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+

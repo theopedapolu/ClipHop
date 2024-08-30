@@ -3,18 +3,24 @@ import Clock from './Clock';
 import DeviceGroup from './DeviceGroup';
 import {DndContext, useDndMonitor} from '@dnd-kit/core';
 import DndIcon from './DnDIcon';
+import SyncButton from './SyncButton';
+import Info from './Info';
 
 const Message = Object.freeze({
     CONNECTION: 'Connection',
     ADD_DEVICE: 'Add Device',
+    ADD_GROUPS: 'Add Groups',
     MERGE_GROUPS: 'Merge Groups',
     UPDATE_CLIPBOARD: 'Update Clipboard',
     GET_CLIPBOARD: 'Get Clipboard',
     CLOSE_DEVICE: 'Close Device'
 })
 
+// List of colors used for groups
 const colors = ['bg-emerald-500','bg-blue-500','bg-rose-500','bg-amber-500','bg-violet-500'];
 
+
+// Generates positions for device groups based on the number of groups
 function generatePositions(numGroups) {
     let radius = 13;
     let positions = [];
@@ -27,41 +33,66 @@ function generatePositions(numGroups) {
                 (17.5-4-Math.round(radius*Math.sin(i*theta))).toString()]);
         }
     }
-    console.log(positions);
     return positions;
 }
 
 
 
+// Main component for managing device groups and WebSocket connection
 function Crown() {
     // Hooks & State
+    const [thisDevice,setThisDevice] = useState({
+        name:"",
+        type:""
+    });
+
     const connection = useRef(null);
-    connection.name = "";
-    connection.type = "";
     useEffect(() => {
         const ws = new WebSocket('ws://localhost:8080');
         ws.onopen = () => {sendMessage(Message.CONNECTION,{text:"Device connected successfully"})};
         ws.onmessage = handleMessage;
         ws.onclose = onClose;
-        connection.ws = ws;
+        connection.ws = ws
+        
     },[])
 
     const [deviceGroups, setDeviceGroups] = useState([]);
 
     // State Change Helper methods
-    const addDeviceGroup = (name,type) => {
-        setDeviceGroups(deviceGroups => {
-            let newId = 1;
-            for (let group of deviceGroups) {
-                if (group.id !== newId) {
-                    break;
-                }
-                newId += 1;
+    
+    // Adds new device groups based on the provided device list
+    const addGroups = (deviceList) => {
+        let newDeviceGroups = [];
+        let groupsMap = new Map();
+        let maxId = 0
+        deviceList.forEach(device => {
+            if (!groupsMap.has(device.groupId)) {
+                groupsMap.set(device.groupId, []);
             }
-            return [...deviceGroups, {id:newId, color:colors[newId-1], devices:[{name:name,type:type}], bubble:false}]
+            groupsMap.get(device.groupId).push({ name: device.name, type: device.type });
+            maxId = Math.max(maxId, device.groupId);
+        });
+
+        for (let i=1; i <= maxId; ++i) {
+            if (groupsMap.has(i)) {
+                let groupDeviceList = groupsMap.get(i)
+                newDeviceGroups.push({id:i, color:colors[i-1], devices:groupDeviceList, bubble:groupDeviceList.length > 1})
+            }
+        }
+        console.log(newDeviceGroups)
+        setDeviceGroups(newDeviceGroups);
+    }
+
+    // Adds a new device to the device groups
+    const addDevice = (newId, name,type) => {
+        setDeviceGroups(deviceGroups => {
+            let newDeviceGroups = [...deviceGroups, {id:newId, color:colors[newId-1], devices:[{name:name,type:type}], bubble:false}].sort((a,b) => (a.id-b.id))
+            console.log(newDeviceGroups)
+            return newDeviceGroups
         });
     };
 
+    // Merges two device groups into one
     const mergeGroups = (id1,id2) => {
         setDeviceGroups(deviceGroups => {
             let updatedGroups = [];
@@ -69,7 +100,7 @@ function Crown() {
                 if (group.id === id2) {
                     const group1 = deviceGroups.find(g => g.id === id1);
                     const mergedDevices = [...group.devices, ...group1.devices];
-                    updatedGroups.push({...group, devices: mergedDevices});
+                    updatedGroups.push({...group, devices: mergedDevices, bubble:mergedDevices.length > 1});
                 } else if (group.id !== id1) { // Skip group id1 since it will be merged later
                     updatedGroups.push(group);
                 }
@@ -78,6 +109,7 @@ function Crown() {
         });
     }
 
+    // Removes a device by name from the device groups
     const removeDevice = (name) => {
         setDeviceGroups(deviceGroups => {
             deviceGroups.reduce((acc,group) => {
@@ -90,35 +122,31 @@ function Crown() {
         });
     };
 
-    const updateDeviceGroups = (groupsList) => {
-        
-    }
-
     // Websocket handlers
     async function sendMessage(type,message) {
         const data = {type, message}
         if (connection.ws && connection.ws.readyState === WebSocket.OPEN) {
+            console.log('Sent Message',data)
             connection.ws.send(JSON.stringify(data));
         } else {
             console.warn('WebSocket is not open. Cannot send message.');
         }
     }
     
+    // Handles incoming WebSocket messages and updates state accordingly
     function handleMessage(event) {
         const {type,message} = JSON.parse(event.data);
         console.log(type,message)
         switch(type) {
+            case Message.ADD_GROUPS:
+                addGroups(message.devices);
+                setThisDevice({name:message.name,type:message.type})
+                break;
             case Message.ADD_DEVICE:
-                if (connection.name !== message.name) {
-                    updateDeviceGroups(message);
-                }
-                if (!connection.name) {
-                    connection.name = message.name;
-                    connection.type = message.type;
-                }
+                addDevice(message.groupId,message.name,message.type)
                 break;
             case Message.MERGE_GROUPS:
-                mergeGroups(message.id1,message.id2);
+                mergeGroups(message.oldId,message.newId);
                 break;
             case Message.CLOSE_DEVICE:
                 removeDevice(message.name);
@@ -129,6 +157,7 @@ function Crown() {
         }
     }
     
+    // Handles WebSocket connection closure and removes the device
     function onClose() {
         removeDevice(connection.name);
         let message = {name:connection.name};
@@ -137,6 +166,7 @@ function Crown() {
 
 
     // Drag & Drop event handlers
+    // Handles drag over events during drag-and-drop operations
     function handleDragOver(event) {
         if (event.over == null || event.over.id === event.active.id) {
             setDeviceGroups(deviceGroups.map((group) => {return {...group,color:colors[group.id-1],bubble:group.devices.length > 1}}))
@@ -153,40 +183,46 @@ function Crown() {
         }
     }
 
+    // Handles the end of a drag event and merges groups if necessary
     function handleDragEnd(event) {
         if (event.over !== null && event.over.id !== event.active.id) {
             mergeGroups(event.active.id,event.over.id);
-            let message = {id1:event.active.id,id2:event.over.id};
-            sendMessage(Message.UPDATE, message);
+            let message = {oldId:event.active.id,newId:event.over.id};
+            sendMessage(Message.MERGE_GROUPS, message);
         }
     }
 
+    // Monitors drag-and-drop events
     function Monitor() {
         useDndMonitor({
             onDragOver(event) {handleDragOver(event)},
             onDragEnd(event) {handleDragEnd(event)}
         })
     }
-
     
-    const positions = useMemo(() => generatePositions(deviceGroups.length),[deviceGroups]);
+    // Generates positions for the device groups based on their count
+    const positions = useMemo(() => {
+        return deviceGroups ? generatePositions(deviceGroups.length) : []
+    }, [deviceGroups])
 
     // Rendered JSX
     return (
-        <div className='flex flex-col items-center w-full min-w-full max-w-full overflow-x-clip mt-5'>
-        <div className='relative w-[90vmin] h-[90vmin] md:w-[35rem] md:h-[35rem]'>
-            <Clock spin={deviceGroups.length <= 1}/>
-            <DndContext>
-            <Monitor/>
-            {deviceGroups.map((group,idx) => {
-                return (
-                <DndIcon iconId={group.id} key={idx} left={positions[idx][0]} top={positions[idx][1]} bubble={group.bubble}>
-                <DeviceGroup devices={group.devices} color={group.color}/>
-                </DndIcon>
-                )
-            })}
-            </DndContext>   
-        </div>
+        <div className='flex flex-col place-content-center place-items-center md:flex-row  w-full min-w-full max-w-full overflow-x-clip mt-5'>
+            <Info outerDivClasses='mx-24 mb-5' name={thisDevice.name} color={deviceGroups.find(group => group.devices.some(device => device.name === thisDevice.name))?.color} type='E'/>
+            <div className='justify-self-center relative w-[90vmin] h-[90vmin] md:w-[35rem] md:h-[35rem]'>
+                <Clock spin={deviceGroups ? deviceGroups.length <= 1 : true}/>
+                <DndContext>
+                <Monitor/>
+                {deviceGroups && deviceGroups.map((group,idx) => {
+                    return (
+                    <DndIcon iconId={group.id} key={idx} left={positions[idx][0]} top={positions[idx][1]} bubble={group.bubble}>
+                    <DeviceGroup devices={group.devices} color={group.color}/>
+                    </DndIcon>
+                    )
+                })}
+                </DndContext>   
+            </div>
+            <SyncButton outerDivClasses='mx-24' color='green'/>
         </div>
     )
 }
