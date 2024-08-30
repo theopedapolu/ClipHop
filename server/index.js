@@ -8,6 +8,7 @@ const config = {
 const Message = Object.freeze({
     CONNECTION: 'Connection',
     ADD_DEVICE: 'Add Device',
+    ADD_GROUPS: 'Add Groups',
     MERGE_GROUPS: 'Merge Groups',
     UPDATE_CLIPBOARD: 'Update Clipboard',
     GET_CLIPBOARD: 'Get Clipboard',
@@ -18,22 +19,14 @@ class ClipHopServer {
     constructor(port) {
         this.wss = new WebSocketServer({port:port})
         this.wss.on('connection', (ws, request) => this.onConnection(ws, request))
-        this.ipToGroupsList = new Map();
-        this.latestState = "";
+        this.ipToDevicesList = new Map();
         //this.wss.on('headers', (headers, request) => this.checkHeaders(headers, request))
         console.log('ClipHop is running on port', port)
     }
 
     onConnection(ws, request) {
-        var dev = new Device(ws, request);
-        if (!this.ipToGroupsList.has(dev.ip)) {
-            this.ipToGroupsList.set(dev.ip,[]);
-        }
-        // Find new group id and create new group
-        groupsList = this.ipToGroupsList.get(dev.ip);
-        newId = groupsList.findIndex((group,idx) => group.id !== idx+1);
-        newId = newId === -1 ? groupsList.length + 1 : newId + 1;
-        groupsList.push({groupId:newId,device:dev})
+        const dev = new Device(ws, request);
+        console.log(dev.name,dev.socket === undefined)
 
         // Attach event listeners
         ws.onmessage = (event) => (this.onMessage(dev, event));
@@ -43,25 +36,39 @@ class ClipHopServer {
     onMessage(device, event) {
         console.log('This is the event',event.data);
         const {type, message} = JSON.parse(event.data);
+        let DevicesList;
+        let newDevicesList;
         switch (type) {
             case Message.CONNECTION:
-                groupsList = this.ipToGroupsList.get(device.ip)
-                newDeviceList = groupsList.map(dev => ({groupId,name:dev.name,type:'A'}))
-                message = {name:device.name,type:'A'}
-                this.broadcastMessage(device,Message.ADD_DEVICE,message,Message.ADD_DEVICE,newDeviceList);
+                // Create list at device's ip if it doesn't exist
+                if (!this.ipToDevicesList.has(device.ip)) {
+                    this.ipToDevicesList.set(device.ip,[]);
+                }
+                // Find new group id and add device
+                DevicesList = this.ipToDevicesList.get(device.ip);
+                let newId = 1;
+                while (DevicesList.findIndex(group => group.id == newId) >= 0) {
+                    newId += 1;
+                }
+                DevicesList.push({id:newId,device:device})
+                // Send messages
+                newDevicesList = DevicesList.map(d => ({groupId:d.id,name:d.device.name,type:'A'}))
+                let newMessage = {groupId:newId,name:device.name,type:'A'}
+                this.broadcastMessage(device,Message.ADD_DEVICE,newMessage,Message.ADD_GROUPS,{name:device.name,type:device.type,devices:newDevicesList});
                 break;
             case Message.MERGE_GROUPS:
-                groupsList = this.ipToGroupsList.get(device.ip)
-                for (let dev of groupsList) {
-                    if (dev.groupId === message.oldId) {
-                        dev.groupId = message.newId
+                DevicesList = this.ipToDevicesList.get(device.ip)
+                for (let dev of DevicesList) {
+                    if (dev.id === message.oldId) {
+                        dev.id = message.newId
                     }
                 }
                 this.broadcastMessage(device,Message.MERGE_GROUPS,message);
                 break;
             case Message.CLOSE_DEVICE:
-                groupsList = this.ipToGroupsList.get(device.ip);
-                newDevicesList = groupsList.filter(dev.device.name !== message.name)
+                DevicesList = this.ipToDevicesList.get(device.ip);
+                newDevicesList = DevicesList.filter(dev.device.name !== message.name)
+                this.ipToDevicesList.set(device.ip, newDevicesList)
                 this.broadcastMessage(device,Message.CLOSE_DEVICE,message)
                 console.log('Closed device')
                 break;
@@ -79,9 +86,9 @@ class ClipHopServer {
         if (deviceType) {
             this.sendMessage(device.socket,deviceType,deviceMessage);
         }
-        for (let peerDevice of this.ipToGroupsList.get(device.ip)) {
+        for (let peerDevice of this.ipToDevicesList.get(device.ip)) {
             if (peerDevice.device.name !== device.name) {
-                this.sendMessage(peerDevice.socket,type,message);
+                this.sendMessage(peerDevice.device.socket,type,message);
             }
         }
     }
