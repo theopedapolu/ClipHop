@@ -45,7 +45,7 @@ function generatePositions(numGroups,width) {
 function Crown() {
     // Hooks & State
     const [thisDevice,setThisDevice] = useState({
-        name:"",
+        name:"Caraxes",
         type:""
     });
 
@@ -53,15 +53,15 @@ function Crown() {
 
     const connection = useRef(null);
     useEffect(() => {
-        const ws = new WebSocket('ws://localhost:8080');
-        ws.onopen = () => {sendMessage(Message.CONNECTION,{text:"Device connected successfully"})};
-        ws.onmessage = handleMessage;
-        ws.onclose = onClose;
-        connection.ws = ws
+        // const ws = new WebSocket('ws://localhost:8080');
+        // ws.onopen = () => {sendMessage(Message.CONNECTION,{text:"Device connected successfully"})};
+        // ws.onmessage = handleMessage;
+        // ws.onclose = onClose;
+        // connection.ws = ws
         
     },[])
 
-    const [deviceGroups, setDeviceGroups] = useState([]);
+    const [deviceGroups, setDeviceGroups] = useState([{id:1, color:colors[0], devices:[{name:"Vermithor",type:'A'}], bubble:false}]);
 
     // State Change Helper methods
     
@@ -130,12 +130,12 @@ function Crown() {
     // Websocket handlers
     async function sendMessage(type,message) {
         const data = {type, message}
-        if (connection.ws && connection.ws.readyState === WebSocket.OPEN) {
-            console.log('Sent Message',data)
-            connection.ws.send(JSON.stringify(data));
-        } else {
-            console.warn('WebSocket is not open. Cannot send message.');
-        }
+        // if (connection.ws && connection.ws.readyState === WebSocket.OPEN) {
+        //     console.log('Sent Message',data)
+        //     connection.ws.send(JSON.stringify(data));
+        // } else {
+        //     console.warn('WebSocket is not open. Cannot send message.');
+        // }
     }
     
     // Handles incoming WebSocket messages and updates state accordingly
@@ -164,9 +164,9 @@ function Crown() {
     
     // Handles WebSocket connection closure and removes the device
     function onClose() {
-        removeDevice(connection.name);
-        let message = {name:connection.name};
-        sendMessage(Message.CLOSE_DEVICE, message);
+        // removeDevice(connection.name);
+        // let message = {name:connection.name};
+        // sendMessage(Message.CLOSE_DEVICE, message);
     }
 
 
@@ -213,10 +213,21 @@ function Crown() {
 
     // Rendered JSX
     return (
-        <div className='flex flex-col place-content-center place-items-center md:flex-row'>
-            <Info outerDivClasses='mx-24 mb-5' name={thisDevice.name} color={deviceGroups.find(group => group.devices.some(device => device.name === thisDevice.name))?.color} type='E'/>
-            <div className='relative w-screen md:w-[35rem] md:h-[35rem]'>
-                <Clock spin={deviceGroups ? deviceGroups.length <= 1 : true}/>
+        <div className='flex flex-col place-content-center place-items-center md:flex-row md:mt-10'>
+            {windowSize[1] < 768 ? (
+                <div className='flex flex-row place-content-evenly place-items-evenly'>
+                    <Info outerDivClasses='mx-auto scale-75 md:scale-100' name={thisDevice.name} color={deviceGroups.find(group => group.devices.some(device => device.name === thisDevice.name))?.color} type='E'/>
+                    <SyncButton outerDivClasses='mx-auto scale-[0.7] md:scale-100' color='green'/>
+                </div>
+
+            ): (
+                <>
+                    <Info outerDivClasses='mx-auto order-1 scale-75 md:scale-100' name={thisDevice.name} color={deviceGroups.find(group => group.devices.some(device => device.name === thisDevice.name))?.color} type='E'/>
+                    <SyncButton outerDivClasses='mx-auto order-3 scale-[0.7] md:scale-100' color='green'/>
+                </>
+            )}
+            <div className='relative order-2 w-screen md:w-[35rem] md:h-[35rem]'>
+                <Clock spin={deviceGroups ? deviceGroups.length <= 1 : true} width={windowSize[1]}/>
                 <DndContext>
                 <Monitor/>
                 {deviceGroups && deviceGroups.map((group,idx) => {
@@ -228,7 +239,6 @@ function Crown() {
                 })}
                 </DndContext>   
             </div>
-            <SyncButton outerDivClasses='mx-24' color='green'/>
         </div>
     )
 }

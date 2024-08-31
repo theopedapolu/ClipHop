@@ -1,11 +1,8 @@
 import React from 'react';
 
-{/* <svg className="absolute top-1/2 left-1/2 sync-logo" width="40rem" height="40rem" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M14.3935 5.37371C18.0253 6.70569 19.8979 10.7522 18.5761 14.4118C17.6363 17.0135 15.335 18.7193 12.778 19.0094M12.778 19.0094L13.8253 17.2553M12.778 19.0094L14.4889 20M9.60651 18.6263C5.97465 17.2943 4.10205 13.2478 5.42394 9.58823C6.36371 6.98651 8.66504 5.28075 11.222 4.99059M11.222 4.99059L10.1747 6.74471M11.222 4.99059L9.51114 4" stroke="#FEBF55" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg> */}
-function Clock({spin=true,color='black'}) {
+function Clock({spin=true,color='black',width}) {
 return (
-    <svg className={`absolute top-1/2 left-1/2 w-full translate-x-[-50%] md:translate-y-[-50%] ${spin ? 'spin-logo':''}`} version="1.0" xmlns="http://www.w3.org/2000/svg"
+    <svg className={`absolute top-1/2 left-1/2 w-full translate-x-[-50%] md:translate-y-[-50%] ${spin ? (width >= 768 ? 'spin-logo-md' : 'spin-logo') : ''}`} version="1.0" xmlns="http://www.w3.org/2000/svg"
      viewBox="0 0 300.000000 300.000000"
  preserveAspectRatio="xMidYMid meet">
 <g transform="translate(0.000000,300.000000) scale(0.100000,-0.100000)"

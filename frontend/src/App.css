@@ -8,6 +8,11 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
+  .spin-logo-md {
+    animation: spin-md infinite 15s linear;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
   .spin-logo {
     animation: spin infinite 15s linear;
   }
@@ -35,6 +40,15 @@
 }
 
 @keyframes spin {
+  from {
+    transform: translate(-50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%) rotate(360deg);
+  }
+}
+
+@keyframes spin-md {
   from {
     transform: translate(-50%,-50%) rotate(0deg);
   }

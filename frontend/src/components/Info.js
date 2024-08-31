@@ -16,12 +16,12 @@ const iconMap = {
 function Info({outerDivClasses,name,type='A',color='bg-green-500'}) {
     const DeviceIcon = iconMap[type];
     return (
-        <div className={`flex flex-col place-items-center ${outerDivClasses} font-poppins text-lg`}>
-            <div className={`rounded-full ${color} p-3 w-fit`}>
+        <div className={`flex flex-col place-items-center ${outerDivClasses} font-poppins text-lg text-nowrap`}>
+            <div className={`rounded-full ${color} p-3`}>
                 <DeviceIcon/>
             </div>
-            <span className="mt-3">This device is known as:</span>
-            <span className="font-bold">{name}</span>
+            <span className="mt-1">This device is known as:</span>
+            <span className="-mt-1 p-0 font-bold">{name}</span>
         </div>
     )
 }
