@@ -5,6 +5,7 @@ import {DndContext, useDndMonitor} from '@dnd-kit/core';
 import DndIcon from './DnDIcon';
 import SyncButton from './SyncButton';
 import Info from './Info';
+import useSize from './useSize';
 
 const Message = Object.freeze({
     CONNECTION: 'Connection',
@@ -21,16 +22,18 @@ const colors = ['bg-emerald-500','bg-blue-500','bg-rose-500','bg-amber-500','bg-
 
 
 // Generates positions for device groups based on the number of groups
-function generatePositions(numGroups) {
-    let radius = 13;
+function generatePositions(numGroups,width) {
+    let radius = width >= 768 ? 13 : Number(((13/35)*width/16).toFixed(2))
+    let originShift = width >= 768 ? 13.5 : Number(((11.5/35)*width/16).toFixed(2))
+    console.log(width,radius)
     let positions = [];
     if (numGroups === 1) {
-        positions.push(['13.5','13.5']);
+        positions.push([originShift.toString(),originShift.toString()]);
     } else if (numGroups >= 1) {
         let theta = 2*Math.PI/numGroups;
         for (let i = 0; i < numGroups; ++i) {
-            positions.push([(Math.round(radius*Math.cos(i*theta)) + 17.5-4).toString(),
-                (17.5-4-Math.round(radius*Math.sin(i*theta))).toString()]);
+            positions.push([(Math.round(radius*Math.cos(i*theta)) + originShift).toString(),
+                (originShift-Math.round(radius*Math.sin(i*theta))).toString()]);
         }
     }
     return positions;
@@ -45,6 +48,8 @@ function Crown() {
         name:"",
         type:""
     });
+
+    const windowSize = useSize();
 
     const connection = useRef(null);
     useEffect(() => {
@@ -202,20 +207,21 @@ function Crown() {
     
     // Generates positions for the device groups based on their count
     const positions = useMemo(() => {
-        return deviceGroups ? generatePositions(deviceGroups.length) : []
-    }, [deviceGroups])
+        return deviceGroups ? generatePositions(deviceGroups.length,windowSize[1]) : []
+    }, [deviceGroups,windowSize])
+
 
     // Rendered JSX
     return (
-        <div className='flex flex-col place-content-center place-items-center md:flex-row  w-full min-w-full max-w-full overflow-x-clip mt-5'>
+        <div className='flex flex-col place-content-center place-items-center md:flex-row'>
             <Info outerDivClasses='mx-24 mb-5' name={thisDevice.name} color={deviceGroups.find(group => group.devices.some(device => device.name === thisDevice.name))?.color} type='E'/>
-            <div className='justify-self-center relative w-[90vmin] h-[90vmin] md:w-[35rem] md:h-[35rem]'>
+            <div className='relative w-screen md:w-[35rem] md:h-[35rem]'>
                 <Clock spin={deviceGroups ? deviceGroups.length <= 1 : true}/>
                 <DndContext>
                 <Monitor/>
                 {deviceGroups && deviceGroups.map((group,idx) => {
                     return (
-                    <DndIcon iconId={group.id} key={idx} left={positions[idx][0]} top={positions[idx][1]} bubble={group.bubble}>
+                    <DndIcon iconId={group.id} key={idx} top={positions[idx][0]} left={positions[idx][1]} bubble={group.bubble}>
                     <DeviceGroup devices={group.devices} color={group.color}/>
                     </DndIcon>
                     )
