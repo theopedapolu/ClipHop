@@ -1,15 +1,16 @@
 {
   "files": {
-    "main.css": "/static/css/main.38d20344.css",
-    "main.js": "/static/js/main.5bc4af92.js",
+    "main.css": "/static/css/main.b0417e75.css",
+    "main.js": "/static/js/main.c58ee397.js",
     "static/js/453.4da0400f.chunk.js": "/static/js/453.4da0400f.chunk.js",
+    "static/media/aberforth_tiles.ttf": "/static/media/aberforth_tiles.875e7e5dd759d87cfd24.ttf",
     "index.html": "/index.html",
-    "main.38d20344.css.map": "/static/css/main.38d20344.css.map",
-    "main.5bc4af92.js.map": "/static/js/main.5bc4af92.js.map",
+    "main.b0417e75.css.map": "/static/css/main.b0417e75.css.map",
+    "main.c58ee397.js.map": "/static/js/main.c58ee397.js.map",
     "453.4da0400f.chunk.js.map": "/static/js/453.4da0400f.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.38d20344.css",
-    "static/js/main.5bc4af92.js"
+    "static/css/main.b0417e75.css",
+    "static/js/main.c58ee397.js"
   ]
 }
