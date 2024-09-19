@@ -55,28 +55,25 @@ class ClipHopServer {
                 // Send messages
                 newDevicesList = DevicesList.map(d => ({groupId:d.id,name:d.device.name,type:'A'}))
                 let newMessage = {groupId:newId,name:device.name,type:'A'}
-                this.broadcastMessage(device,Message.ADD_DEVICE,newMessage,Message.ADD_GROUPS,{name:device.name,type:device.type,devices:newDevicesList});
+                this.broadcastMessage(device,Message.ADD_DEVICE,newMessage,Message.ADD_GROUPS,{name:device.name,type:device.type,id:newId,devices:newDevicesList});
                 break;
             case Message.MERGE_GROUPS:
+                // message = {oldId, newId}
                 DevicesList = this.ipToDevicesList.get(device.ip)
                 for (let dev of DevicesList) {
                     if (dev.id === message.oldId) {
                         dev.id = message.newId
                     }
                 }
-                this.broadcastMessage(device,Message.MERGE_GROUPS,message);
+                const clipboard = this.ipToClipboard.get(device.ip + message.newId.toString())
+                message.newClipboard = clipboard
+                this.broadcastMessage(device,Message.MERGE_GROUPS,message,Message.UPDATE_CLIPBOARD,{newClipboard:clipboard});
                 break;
             case Message.UPDATE_CLIPBOARD:
                 // message = {groupId,clipboard}
                 this.ipToClipboard.set(device.ip + message.groupId.toString(),message.clipboard)
-                let updateMessage = {newClipboard:message.clipboard}
+                let updateMessage = {groupId:message.groupId,newClipboard:message.clipboard}
                 this.broadcastMessage(device,Message.UPDATE_CLIPBOARD,updateMessage)
-                break;
-            case Message.GET_CLIPBOARD:
-                // message = {groupId}
-                const clipboard = this.ipToClipboard.get(device.ip + message.groupId.toString())
-                let clipboardMessage = {newClipboard:clipboard}
-                this.broadcastMessage(device,"","",Message.UPDATE_CLIPBOARD,clipboardMessage)
                 break;
             case Message.CLOSE_DEVICE:
                 DevicesList = this.ipToDevicesList.get(device.ip);

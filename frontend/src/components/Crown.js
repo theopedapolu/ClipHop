@@ -26,7 +26,6 @@ const colors = ['bg-emerald-500','bg-blue-500','bg-rose-500','bg-amber-500','bg-
 function generatePositions(numGroups,width) {
     let radius = width >= 768 ? 13 : Number(((13/35)*width/16).toFixed(2))
     let originShift = width >= 768 ? 13.5 : Number(((11.5/35)*width/16).toFixed(2))
-    console.log(width,radius)
     let positions = [];
     if (numGroups === 1) {
         positions.push([originShift.toString(),originShift.toString()]);
@@ -54,14 +53,18 @@ function Crown() {
 
     const windowSize = useSize();
 
-    const connection = useRef(null);
-    connection.clipboard = ""
+    const connection = useRef({ws:null,clipboard:"",id:1});
+
+    useEffect(() => {
+        connection.current.id = thisDevice.id;
+    },[thisDevice])
+
     useEffect(() => {
         const ws = new WebSocket('ws://localhost:8080');
         ws.onopen = () => {sendMessage(Message.CONNECTION,{text:"Device connected successfully"})};
         ws.onmessage = handleMessage;
         ws.onclose = onClose;
-        connection.ws = ws
+        connection.current.ws = ws
     },[])
 
     // const [deviceGroups, setDeviceGroups] = useState([{id:1, color:colors[0], devices:[{name:"Vermithor",type:'A'}], bubble:false}]);
@@ -88,7 +91,6 @@ function Crown() {
                 newDeviceGroups.push({id:i, color:colors[i-1], devices:groupDeviceList, bubble:groupDeviceList.length > 1})
             }
         }
-        console.log(newDeviceGroups)
         setDeviceGroups(newDeviceGroups);
     }
 
@@ -96,7 +98,6 @@ function Crown() {
     const addDevice = (newId, name,type) => {
         setDeviceGroups(deviceGroups => {
             let newDeviceGroups = [...deviceGroups, {id:newId, color:colors[newId-1], devices:[{name:name,type:type}], bubble:false}].sort((a,b) => (a.id-b.id))
-            console.log(newDeviceGroups)
             return newDeviceGroups
         });
     };
@@ -133,18 +134,19 @@ function Crown() {
 
     // Updates Clipboard
     async function updateClipboard() {
-        await navigator.clipboard.writeText(connection.clipboard)
-        setThisDevice((d) => ({device:d.name,type:d.type,syncButtonColor:'green'}))
+        console.log('clipboard before',connection.current.clipboard)
+        await navigator.clipboard.writeText(connection.current.clipboard)
+        setThisDevice((d) => ({...d,syncButtonColor:'green'}))
     }
 
     // Updates Group Clipboard
    async function updateGroupClipboard() {
         try {
             const data = await navigator.clipboard.readText()
-            console.log(connection.clipboard,data)
-            if (connection.clipboard !== data) {
-                connection.clipboard = data
-                const message = {groupId:1,clipboard:connection.clipboard}
+            console.log(connection.current.clipboard,data)
+            if (connection.current.clipboard !== data) {
+                connection.current.clipboard = data
+                const message = {groupId:connection.current.id,clipboard:connection.current.clipboard}
                 await sendMessage(Message.UPDATE_CLIPBOARD,message)
                 console.log("Updated clipboard message sent",message)
             }
@@ -163,9 +165,9 @@ function Crown() {
     // Websocket handlers
     async function sendMessage(type,message) {
         const data = {type, message}
-        if (connection.ws && connection.ws.readyState === WebSocket.OPEN) {
+        if (connection.current.ws && connection.current.ws.readyState === WebSocket.OPEN) {
             console.log('Sent Message',data)
-            connection.ws.send(JSON.stringify(data));
+            connection.current.ws.send(JSON.stringify(data));
         } else {
             console.warn('WebSocket is not open. Cannot send message.');
         }
@@ -178,17 +180,23 @@ function Crown() {
         switch(type) {
             case Message.ADD_GROUPS:
                 addGroups(message.devices);
-                setThisDevice({name:message.name,type:message.type})
+                setThisDevice({name:message.name,type:message.type,id:message.id,syncButtonColor:'green'})
                 break;
             case Message.ADD_DEVICE:
                 addDevice(message.groupId,message.name,message.type)
                 break;
             case Message.MERGE_GROUPS:
+                if (connection.current.id === message.oldId && connection.current.clipboard !== message.newClipboard) {
+                    connection.current.clipboard = message.newClipboard;
+                    setThisDevice((d) => ({...d,id:message.newId,syncButtonColor:'red'}))
+                }
                 mergeGroups(message.oldId,message.newId);
                 break;
             case Message.UPDATE_CLIPBOARD:
-                connection.clipboard = message.newClipboard;
-                setThisDevice((d) => ({device:d.name,type:d.type,syncButtonColor:'red'}))
+                if (connection.id === message.groupId && connection.current.clipboard !== message.newClipboard) {
+                    connection.current.clipboard = message.newClipboard;
+                    setThisDevice((d) => ({...d,syncButtonColor:'red'}))
+                }
                 break;
             case Message.CLOSE_DEVICE:
                 removeDevice(message.name);
@@ -244,7 +252,7 @@ function Crown() {
         <div className='flex flex-col place-content-evenly place-items-center md:flex-row md:mt-10'>
             {windowSize[1] < 768 ? (
                 <>
-                <Info outerDivClasses='mx-auto order-1 scale-75' name={thisDevice.name} color={deviceGroups.find(group => group.devices.some(device => device.name === thisDevice.name))?.color} type='E'/>
+                <Info outerDivClasses='mx-auto order-1 scale-75' name={thisDevice.name} color={colors[thisDevice.id-1]} type='E'/>
                 <div className='order-3 flex flex-row place-content-evenly ml-5' style={{marginTop:`${windowSize[1]+10}px`}}>
                     <SyncButton outerDivClasses='mx-auto scale-75' color={thisDevice.syncButtonColor} onClick={updateClipboard}/>
                     <UpdateButton outerDivClasses='mx-auto scale-75' onClick={updateGroupClipboard}/>
@@ -253,7 +261,7 @@ function Crown() {
 
             ): (
                 <>
-                    <Info outerDivClasses='order-1 scale-75 md:scale-100' name={thisDevice.name} color={deviceGroups.find(group => group.devices.some(device => device.name === thisDevice.name))?.color} type='E'/>
+                    <Info outerDivClasses='order-1 scale-75 md:scale-100' name={thisDevice.name+thisDevice.id} color={colors[thisDevice.id-1]} type='E'/>
                     <div className='order-3 flex flex-row place-content-evenly ml-5 md:flex-col md:ml-0'>
                         <SyncButton outerDivClasses='md:my-12' color={thisDevice.syncButtonColor} onClick={updateClipboard}/>
                         <UpdateButton onClick={updateGroupClipboard}/>
@@ -262,7 +270,7 @@ function Crown() {
             )}
     
             <div className='relative order-2 w-screen md:w-[35rem] md:h-[35rem]'>
-                <Clock spin={deviceGroups ? deviceGroups.length <= 1 : true} width={windowSize[1]}/>
+                <Clock spin={deviceGroups ? deviceGroups.length === 1 && deviceGroups[0].devices.length === 1: true} width={windowSize[1]}/>
                 <DndContext>
                 <Monitor/>
                 {deviceGroups && deviceGroups.map((group,idx) => {
