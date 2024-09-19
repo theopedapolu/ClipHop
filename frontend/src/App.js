@@ -8,7 +8,7 @@ function App() {
     <>
       <Nav/>
       <Message/>
-      {/* <Crown/> */}
+      <Crown/>
     </>
   );
 }

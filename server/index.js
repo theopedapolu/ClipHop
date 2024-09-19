@@ -20,6 +20,7 @@ class ClipHopServer {
         this.wss = new WebSocketServer({port:port})
         this.wss.on('connection', (ws, request) => this.onConnection(ws, request))
         this.ipToDevicesList = new Map();
+        this.ipToClipboard = new Map();
         //this.wss.on('headers', (headers, request) => this.checkHeaders(headers, request))
         console.log('ClipHop is running on port', port)
     }
@@ -65,6 +66,18 @@ class ClipHopServer {
                 }
                 this.broadcastMessage(device,Message.MERGE_GROUPS,message);
                 break;
+            case Message.UPDATE_CLIPBOARD:
+                // message = {groupId,clipboard}
+                this.ipToClipboard.set(device.ip + message.groupId.toString(),message.clipboard)
+                let updateMessage = {newClipboard:message.clipboard}
+                this.broadcastMessage(device,Message.UPDATE_CLIPBOARD,updateMessage)
+                break;
+            case Message.GET_CLIPBOARD:
+                // message = {groupId}
+                const clipboard = this.ipToClipboard.get(device.ip + message.groupId.toString())
+                let clipboardMessage = {newClipboard:clipboard}
+                this.broadcastMessage(device,"","",Message.UPDATE_CLIPBOARD,clipboardMessage)
+                break;
             case Message.CLOSE_DEVICE:
                 DevicesList = this.ipToDevicesList.get(device.ip);
                 newDevicesList = DevicesList.filter(dev.device.name !== message.name)
@@ -86,9 +99,11 @@ class ClipHopServer {
         if (deviceType) {
             this.sendMessage(device.socket,deviceType,deviceMessage);
         }
-        for (let peerDevice of this.ipToDevicesList.get(device.ip)) {
-            if (peerDevice.device.name !== device.name) {
-                this.sendMessage(peerDevice.device.socket,type,message);
+        if (type) {
+            for (let peerDevice of this.ipToDevicesList.get(device.ip)) {
+                if (peerDevice.device.name !== device.name) {
+                    this.sendMessage(peerDevice.device.socket,type,message);
+                }
             }
         }
     }

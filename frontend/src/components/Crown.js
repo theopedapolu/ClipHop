@@ -4,6 +4,7 @@ import DeviceGroup from './DeviceGroup';
 import {DndContext, useDndMonitor} from '@dnd-kit/core';
 import DndIcon from './DnDIcon';
 import SyncButton from './SyncButton';
+import UpdateButton from './UpdateButton';
 import Info from './Info';
 import useSize from './useSize';
 
@@ -46,22 +47,25 @@ function Crown() {
     // Hooks & State
     const [thisDevice,setThisDevice] = useState({
         name:"Caraxes",
-        type:""
+        type:"",
+        id:1,
+        syncButtonColor:'green'
     });
 
     const windowSize = useSize();
 
     const connection = useRef(null);
+    connection.clipboard = ""
     useEffect(() => {
-        // const ws = new WebSocket('ws://localhost:8080');
-        // ws.onopen = () => {sendMessage(Message.CONNECTION,{text:"Device connected successfully"})};
-        // ws.onmessage = handleMessage;
-        // ws.onclose = onClose;
-        // connection.ws = ws
-        
+        const ws = new WebSocket('ws://localhost:8080');
+        ws.onopen = () => {sendMessage(Message.CONNECTION,{text:"Device connected successfully"})};
+        ws.onmessage = handleMessage;
+        ws.onclose = onClose;
+        connection.ws = ws
     },[])
 
-    const [deviceGroups, setDeviceGroups] = useState([{id:1, color:colors[0], devices:[{name:"Vermithor",type:'A'}], bubble:false}]);
+    // const [deviceGroups, setDeviceGroups] = useState([{id:1, color:colors[0], devices:[{name:"Vermithor",type:'A'}], bubble:false}]);
+    const [deviceGroups, setDeviceGroups] = useState([])
 
     // State Change Helper methods
     
@@ -127,15 +131,44 @@ function Crown() {
         });
     };
 
+    // Updates Clipboard
+    async function updateClipboard() {
+        await navigator.clipboard.writeText(connection.clipboard)
+        setThisDevice((d) => ({device:d.name,type:d.type,syncButtonColor:'green'}))
+    }
+
+    // Updates Group Clipboard
+   async function updateGroupClipboard() {
+        try {
+            const data = await navigator.clipboard.readText()
+            console.log(connection.clipboard,data)
+            if (connection.clipboard !== data) {
+                connection.clipboard = data
+                const message = {groupId:1,clipboard:connection.clipboard}
+                await sendMessage(Message.UPDATE_CLIPBOARD,message)
+                console.log("Updated clipboard message sent",message)
+            }
+        } catch(err) {
+            console.error("Could not read clipboard")
+        }
+    }
+    
+    // Handles WebSocket connection closure and removes the device
+    function onClose() {
+        // removeDevice(connection.name);
+        // let message = {name:connection.name};
+        // sendMessage(Message.CLOSE_DEVICE, message);
+    }
+
     // Websocket handlers
     async function sendMessage(type,message) {
         const data = {type, message}
-        // if (connection.ws && connection.ws.readyState === WebSocket.OPEN) {
-        //     console.log('Sent Message',data)
-        //     connection.ws.send(JSON.stringify(data));
-        // } else {
-        //     console.warn('WebSocket is not open. Cannot send message.');
-        // }
+        if (connection.ws && connection.ws.readyState === WebSocket.OPEN) {
+            console.log('Sent Message',data)
+            connection.ws.send(JSON.stringify(data));
+        } else {
+            console.warn('WebSocket is not open. Cannot send message.');
+        }
     }
     
     // Handles incoming WebSocket messages and updates state accordingly
@@ -153,6 +186,10 @@ function Crown() {
             case Message.MERGE_GROUPS:
                 mergeGroups(message.oldId,message.newId);
                 break;
+            case Message.UPDATE_CLIPBOARD:
+                connection.clipboard = message.newClipboard;
+                setThisDevice((d) => ({device:d.name,type:d.type,syncButtonColor:'red'}))
+                break;
             case Message.CLOSE_DEVICE:
                 removeDevice(message.name);
                 break;   
@@ -161,14 +198,6 @@ function Crown() {
             
         }
     }
-    
-    // Handles WebSocket connection closure and removes the device
-    function onClose() {
-        // removeDevice(connection.name);
-        // let message = {name:connection.name};
-        // sendMessage(Message.CLOSE_DEVICE, message);
-    }
-
 
     // Drag & Drop event handlers
     // Handles drag over events during drag-and-drop operations
@@ -210,22 +239,28 @@ function Crown() {
         return deviceGroups ? generatePositions(deviceGroups.length,windowSize[1]) : []
     }, [deviceGroups,windowSize])
 
-
     // Rendered JSX
     return (
-        <div className='flex flex-col place-content-center place-items-center md:flex-row md:mt-10'>
+        <div className='flex flex-col place-content-evenly place-items-center md:flex-row md:mt-10'>
             {windowSize[1] < 768 ? (
-                <div className='flex flex-row place-content-evenly place-items-evenly'>
-                    <Info outerDivClasses='mx-auto scale-75 md:scale-100' name={thisDevice.name} color={deviceGroups.find(group => group.devices.some(device => device.name === thisDevice.name))?.color} type='E'/>
-                    <SyncButton outerDivClasses='mx-auto scale-[0.7] md:scale-100' color='green'/>
+                <>
+                <Info outerDivClasses='mx-auto order-1 scale-75' name={thisDevice.name} color={deviceGroups.find(group => group.devices.some(device => device.name === thisDevice.name))?.color} type='E'/>
+                <div className='order-3 flex flex-row place-content-evenly ml-5' style={{marginTop:`${windowSize[1]+10}px`}}>
+                    <SyncButton outerDivClasses='mx-auto scale-75' color={thisDevice.syncButtonColor} onClick={updateClipboard}/>
+                    <UpdateButton outerDivClasses='mx-auto scale-75' onClick={updateGroupClipboard}/>
                 </div>
+                </>
 
             ): (
                 <>
-                    <Info outerDivClasses='mx-auto order-1 scale-75 md:scale-100' name={thisDevice.name} color={deviceGroups.find(group => group.devices.some(device => device.name === thisDevice.name))?.color} type='E'/>
-                    <SyncButton outerDivClasses='mx-auto order-3 scale-[0.7] md:scale-100' color='green'/>
+                    <Info outerDivClasses='order-1 scale-75 md:scale-100' name={thisDevice.name} color={deviceGroups.find(group => group.devices.some(device => device.name === thisDevice.name))?.color} type='E'/>
+                    <div className='order-3 flex flex-row place-content-evenly ml-5 md:flex-col md:ml-0'>
+                        <SyncButton outerDivClasses='md:my-12' color={thisDevice.syncButtonColor} onClick={updateClipboard}/>
+                        <UpdateButton onClick={updateGroupClipboard}/>
+                    </div>
                 </>
             )}
+    
             <div className='relative order-2 w-screen md:w-[35rem] md:h-[35rem]'>
                 <Clock spin={deviceGroups ? deviceGroups.length <= 1 : true} width={windowSize[1]}/>
                 <DndContext>
@@ -239,6 +274,7 @@ function Crown() {
                 })}
                 </DndContext>   
             </div>
+
         </div>
     )
 }

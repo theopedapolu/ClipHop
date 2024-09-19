@@ -6,7 +6,7 @@ return (
      viewBox="0 0 300.000000 300.000000"
  preserveAspectRatio="xMidYMid meet">
 <g transform="translate(0.000000,300.000000) scale(0.100000,-0.100000)"
-fill={`${color}`} stroke="none">
+fill={`${spin ? 'DarkOrange' :'black'}`} stroke="none">
 <path d="M1360 2990 c-331 -23 -669 -181 -919 -431 -211 -212 -350 -472 -411
 -769 -31 -150 -31 -430 0 -580 92 -452 376 -829 780 -1039 133 -69 252 -111
 400 -141 150 -31 430 -31 580 0 148 30 267 72 400 141 404 210 688 587 780
