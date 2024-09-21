@@ -15,11 +15,15 @@ const Message = Object.freeze({
     MERGE_GROUPS: 'Merge Groups',
     UPDATE_CLIPBOARD: 'Update Clipboard',
     GET_CLIPBOARD: 'Get Clipboard',
+    PING: 'Ping',
     CLOSE_DEVICE: 'Close Device'
 })
 
 // List of colors used for groups
 const colors = ['bg-emerald-500','bg-blue-500','bg-rose-500','bg-amber-500','bg-violet-500'];
+
+// Interver to send pings to server
+const PING_INTERVAL = 10000
 
 
 // Generates positions for device groups based on the number of groups
@@ -38,8 +42,6 @@ function generatePositions(numGroups,width) {
     }
     return positions;
 }
-
-
 
 // Main component for managing device groups and WebSocket connection
 function Crown() {
@@ -61,10 +63,14 @@ function Crown() {
 
     useEffect(() => {
         const ws = new WebSocket('ws://localhost:8080');
+        connection.current.ws = ws
         ws.onopen = () => {sendMessage(Message.CONNECTION,{text:"Device connected successfully"})};
         ws.onmessage = handleMessage;
-        ws.onclose = onClose;
-        connection.current.ws = ws
+        const interval = setInterval(() => {sendMessage(Message.PING,{text:'heartbeat'})}, PING_INTERVAL)
+        ws.onclose = () => {
+            clearInterval(interval)
+            ws.close()
+        }
     },[])
 
     // const [deviceGroups, setDeviceGroups] = useState([{id:1, color:colors[0], devices:[{name:"Vermithor",type:'A'}], bubble:false}]);
@@ -153,13 +159,6 @@ function Crown() {
         } catch(err) {
             console.error("Could not read clipboard")
         }
-    }
-    
-    // Handles WebSocket connection closure and removes the device
-    function onClose() {
-        // removeDevice(connection.name);
-        // let message = {name:connection.name};
-        // sendMessage(Message.CLOSE_DEVICE, message);
     }
 
     // Websocket handlers

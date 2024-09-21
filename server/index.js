@@ -12,26 +12,41 @@ const Message = Object.freeze({
     MERGE_GROUPS: 'Merge Groups',
     UPDATE_CLIPBOARD: 'Update Clipboard',
     GET_CLIPBOARD: 'Get Clipboard',
+    PING: 'Ping',
     CLOSE_DEVICE: 'Close Device'
 })
 
+const HEARTBEAT_INTERVAL= 21000
+
 class ClipHopServer {
     constructor(port) {
-        this.wss = new WebSocketServer({port:port})
+        this.wss = new WebSocketServer({port:port,clientTracking:true})
         this.wss.on('connection', (ws, request) => this.onConnection(ws, request))
         this.ipToDevicesList = new Map();
         this.ipToClipboard = new Map();
+
+        // Check for pings from clients periodically
+        const interval = setInterval(() => {
+            console.log('Checking dead connections:')
+            this.wss.clients.forEach((ws) => {
+                if (!ws.isAlive) {
+                    this.onClose(ws)
+                } else {
+                    ws.isAlive = false
+                }
+            })
+        },HEARTBEAT_INTERVAL) 
+        this.wss.on('close',()=>{clearInterval(interval)})
         //this.wss.on('headers', (headers, request) => this.checkHeaders(headers, request))
         console.log('ClipHop is running on port', port)
     }
 
     onConnection(ws, request) {
         const dev = new Device(ws, request);
-        console.log(dev.name,dev.socket === undefined)
-
         // Attach event listeners
-        ws.onmessage = (event) => (this.onMessage(dev, event));
-        ws.onerror =  () => console.error;
+        ws.onmessage = (event) => {this.onMessage(dev, event)};
+        ws.onerror =  (event) => {console.error(event)}
+        ws.onclose = () => {this.onClose(ws)}
     }
 
     onMessage(device, event) {
@@ -42,49 +57,74 @@ class ClipHopServer {
         switch (type) {
             case Message.CONNECTION:
                 // Create list at device's ip if it doesn't exist
-                if (!this.ipToDevicesList.has(device.ip)) {
-                    this.ipToDevicesList.set(device.ip,[]);
+                if (!this.ipToDevicesList.has(device.socket.ip)) {
+                    this.ipToDevicesList.set(device.socket.ip,[]);
                 }
                 // Find new group id and add device
-                DevicesList = this.ipToDevicesList.get(device.ip);
+                DevicesList = this.ipToDevicesList.get(device.socket.ip);
                 let newId = 1;
-                while (DevicesList.findIndex(group => group.id == newId) >= 0) {
+                while (DevicesList.findIndex(dev => dev.socket.groupId == newId) >= 0) {
                     newId += 1;
                 }
-                DevicesList.push({id:newId,device:device})
+                device.socket.groupId = newId
+                DevicesList.push(device)
                 // Send messages
-                newDevicesList = DevicesList.map(d => ({groupId:d.id,name:d.device.name,type:'A'}))
-                let newMessage = {groupId:newId,name:device.name,type:'A'}
-                this.broadcastMessage(device,Message.ADD_DEVICE,newMessage,Message.ADD_GROUPS,{name:device.name,type:device.type,id:newId,devices:newDevicesList});
+                newDevicesList = DevicesList.map(dev => ({groupId:dev.socket.groupId,name:dev.socket.name,type:'A'}))
+                let newMessage = {groupId:newId,name:device.socket.name,type:'A'}
+                this.broadcastMessage(device.socket,Message.ADD_DEVICE,newMessage,Message.ADD_GROUPS,{name:device.socket.name,type:device.type,id:newId,devices:newDevicesList});
                 break;
             case Message.MERGE_GROUPS:
                 // message = {oldId, newId}
-                DevicesList = this.ipToDevicesList.get(device.ip)
+                DevicesList = this.ipToDevicesList.get(device.socket.ip)
                 for (let dev of DevicesList) {
-                    if (dev.id === message.oldId) {
-                        dev.id = message.newId
+                    if (dev.socket.groupId === message.oldId) {
+                        dev.socket.groupId = message.newId
                     }
                 }
-                const clipboard = this.ipToClipboard.get(device.ip + message.newId.toString())
+                const clipboard = this.ipToClipboard.get(device.socket.ip + message.newId.toString())
                 message.newClipboard = clipboard
-                this.broadcastMessage(device,Message.MERGE_GROUPS,message,Message.UPDATE_CLIPBOARD,{newClipboard:clipboard});
+                this.broadcastMessage(device.socket,Message.MERGE_GROUPS,message,Message.UPDATE_CLIPBOARD,{newClipboard:clipboard});
                 break;
             case Message.UPDATE_CLIPBOARD:
                 // message = {groupId,clipboard}
-                this.ipToClipboard.set(device.ip + message.groupId.toString(),message.clipboard)
+                this.ipToClipboard.set(device.socket.ip + message.groupId.toString(),message.clipboard)
                 let updateMessage = {groupId:message.groupId,newClipboard:message.clipboard}
-                this.broadcastMessage(device,Message.UPDATE_CLIPBOARD,updateMessage)
+                this.broadcastMessage(device.socket,Message.UPDATE_CLIPBOARD,updateMessage)
                 break;
-            case Message.CLOSE_DEVICE:
-                DevicesList = this.ipToDevicesList.get(device.ip);
-                newDevicesList = DevicesList.filter(dev.device.name !== message.name)
-                this.ipToDevicesList.set(device.ip, newDevicesList)
-                this.broadcastMessage(device,Message.CLOSE_DEVICE,message)
-                console.log('Closed device')
-                break;
+            case Message.PING:
+                device.socket.isAlive = true
             default:
                 console.warn(`Unhandled message type: ${type}`);
         }
+    }
+
+    onClose(ws) {
+        // Remove device from stored state
+        console.log('Closing device ', ws.name)
+        if (!this.ipToDevicesList.has(ws.ip)) {
+            return
+        }
+
+        let newDevicesList = this.ipToDevicesList.get(ws.ip).filter((dev) => {dev.socket.name === ws.name})
+        let found = newDevicesList.length !== this.ipToDevicesList.get(ws.ip).length
+        if (newDevicesList.length > 0) {
+            this.ipToDevicesList.set(ws.ip, newDevicesList)
+        } else {
+            this.ipToDevicesList.delete(ws.ip)
+        }
+
+        // Remove clipboard content
+        const countGroup = newDevicesList.reduce((count,dev) => {
+            return dev.socket.groupId === ws.groupId ? count + 1 : count
+        },0)
+        if (countGroup === 0) {
+            this.ipToClipboard.delete(ws.ip + ws.groupId.toString())
+        }
+
+        if (found && newDevicesList.length > 0) {
+            this.broadcastMessage(ws,Message.CLOSE_DEVICE,{groupId:ws.groupId, name:ws.name})
+        }
+        ws.terminate()
     }
 
     sendMessage(clientSocket,type,message) {
@@ -92,14 +132,14 @@ class ClipHopServer {
         clientSocket.send(JSON.stringify(data));
     }
 
-    broadcastMessage(device,type,message,deviceType="",deviceMessage="") {
+    broadcastMessage(socket,type,message,deviceType="",deviceMessage="") {
         if (deviceType) {
-            this.sendMessage(device.socket,deviceType,deviceMessage);
+            this.sendMessage(socket,deviceType,deviceMessage);
         }
         if (type) {
-            for (let peerDevice of this.ipToDevicesList.get(device.ip)) {
-                if (peerDevice.device.name !== device.name) {
-                    this.sendMessage(peerDevice.device.socket,type,message);
+            for (let peerDevice of this.ipToDevicesList.get(socket.ip)) {
+                if (peerDevice.socket.name !== socket.name) {
+                    this.sendMessage(peerDevice.socket,type,message);
                 }
             }
         }
@@ -110,8 +150,10 @@ class ClipHopServer {
 class Device {
     constructor(ws, request) {
         this.socket = ws;
-        this.name = uniqueNamesGenerator(config);
-        this.ip = request.socket.remoteAddress;
+        this.socket.isAlive = false;
+        this.socket.name = uniqueNamesGenerator(config);
+        this.socket.groupId = 0;
+        this.socket.ip = request.socket.remoteAddress;
         this.userAgent = request.headers['user-agent'];
         this.connectionTime = new Date();
     }
