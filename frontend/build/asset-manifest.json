@@ -1,16 +1,16 @@
 {
   "files": {
     "main.css": "/static/css/main.8c9dbf3d.css",
-    "main.js": "/static/js/main.b69b9e91.js",
+    "main.js": "/static/js/main.029f555e.js",
     "static/js/453.4da0400f.chunk.js": "/static/js/453.4da0400f.chunk.js",
     "static/media/aberforth_tiles.ttf": "/static/media/aberforth_tiles.875e7e5dd759d87cfd24.ttf",
     "index.html": "/index.html",
     "main.8c9dbf3d.css.map": "/static/css/main.8c9dbf3d.css.map",
-    "main.b69b9e91.js.map": "/static/js/main.b69b9e91.js.map",
+    "main.029f555e.js.map": "/static/js/main.029f555e.js.map",
     "453.4da0400f.chunk.js.map": "/static/js/453.4da0400f.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.8c9dbf3d.css",
-    "static/js/main.b69b9e91.js"
+    "static/js/main.029f555e.js"
   ]
 }

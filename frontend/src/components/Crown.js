@@ -26,7 +26,7 @@ const colors = ['bg-emerald-500','bg-blue-500','bg-rose-500','bg-amber-500','bg-
 const PING_INTERVAL = 10000
 
 // ClipHop Server URL
-const CLIPHOP_SERVER = 'wss://ws.cliphop.net:8080';
+const CLIPHOP_SERVER = 'wss://ws.cliphop.net:443';
 
 
 // Generates positions for device groups based on the number of groups
@@ -69,11 +69,11 @@ function Crown() {
         connection.current.ws = ws
         ws.onopen = () => {sendMessage(Message.CONNECTION,{text:"Device connected successfully"})};
         ws.onmessage = handleMessage;
-        const interval = setInterval(() => {sendMessage(Message.PING,{text:'heartbeat'})}, PING_INTERVAL)
-        ws.onclose = () => {
-            clearInterval(interval)
-            ws.close()
-        }
+        // const interval = setInterval(() => {sendMessage(Message.PING,{text:'heartbeat'})}, PING_INTERVAL)
+        // ws.onclose = () => {
+        //     clearInterval(interval)
+        //     ws.close()
+        //}
     },[])
 
     // const [deviceGroups, setDeviceGroups] = useState([{id:1, color:colors[0], devices:[{name:"Vermithor",type:'A'}], bubble:false}]);
