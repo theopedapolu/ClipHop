@@ -25,6 +25,9 @@ const colors = ['bg-emerald-500','bg-blue-500','bg-rose-500','bg-amber-500','bg-
 // Interver to send pings to server
 const PING_INTERVAL = 10000
 
+// ClipHop Server URL
+const CLIPHOP_SERVER = 'wss://ws.cliphop.net:8080';
+
 
 // Generates positions for device groups based on the number of groups
 function generatePositions(numGroups,width) {
@@ -62,7 +65,7 @@ function Crown() {
     },[thisDevice])
 
     useEffect(() => {
-        const ws = new WebSocket('ws://localhost:8080');
+        const ws = new WebSocket(CLIPHOP_SERVER);
         connection.current.ws = ws
         ws.onopen = () => {sendMessage(Message.CONNECTION,{text:"Device connected successfully"})};
         ws.onmessage = handleMessage;
@@ -125,16 +128,17 @@ function Crown() {
         });
     }
 
-    // Removes a device by name from the device groups
+    // Removes a device by name from the deviceGroups state
     const removeDevice = (name) => {
         setDeviceGroups(deviceGroups => {
-            deviceGroups.reduce((acc,group) => {
-                let newDevices = group.devices.filter(device => device.name !== name);
+            let acc = []
+            for (let group of deviceGroups) {
+                let newDevices = group.devices.filter((device) => device.name !== name);
                 if (newDevices.length > 0) {
                     acc.push({...group,devices:newDevices})
                 }
-                return acc;
-            },[]);
+            }
+            return acc
         });
     };
 

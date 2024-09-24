@@ -93,6 +93,7 @@ class ClipHopServer {
                 break;
             case Message.PING:
                 device.socket.isAlive = true
+                break;
             default:
                 console.warn(`Unhandled message type: ${type}`);
         }
@@ -105,9 +106,9 @@ class ClipHopServer {
             return
         }
 
-        let newDevicesList = this.ipToDevicesList.get(ws.ip).filter((dev) => {dev.socket.name === ws.name})
+        let newDevicesList = this.ipToDevicesList.get(ws.ip).filter((dev) => dev.socket.name !== ws.name)
         let found = newDevicesList.length !== this.ipToDevicesList.get(ws.ip).length
-        if (newDevicesList.length > 0) {
+        if (found && newDevicesList.length > 0) {
             this.ipToDevicesList.set(ws.ip, newDevicesList)
         } else {
             this.ipToDevicesList.delete(ws.ip)
@@ -120,10 +121,11 @@ class ClipHopServer {
         if (countGroup === 0) {
             this.ipToClipboard.delete(ws.ip + ws.groupId.toString())
         }
-
+        
         if (found && newDevicesList.length > 0) {
             this.broadcastMessage(ws,Message.CLOSE_DEVICE,{groupId:ws.groupId, name:ws.name})
         }
+
         ws.terminate()
     }
 
