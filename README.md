@@ -5,6 +5,7 @@ Utility app to synchronize clipboards across multiple devices on the same local 
 - [React](https://react.dev/) & [TailwindCSS](https://tailwindcss.com/) (Frontend UI)
 - [Node.js](https://nodejs.org/en) (Backend server)
 - [WebSocket API](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API) (Bidirectional network communication)
+- AWS Amplify & EC2 (Hosting & Deployment)
 
 **In addition, the following libraries were used in the development of the app:**
 - React [dnd kit](https://dndkit.com/) (handles device drag & drop interactions)
