@@ -1,7 +1,6 @@
-import React, { useState } from "react";
+import React from "react";
 
-function Message() {
-    const [dispatch,setDispatch] = useState("Open ClipHop on another device to sync your clipboards")
+function Message({dispatch}) {
     return (
         <div className="mt-[3rem]">
         <h2 className="text-[#0094C2] text-center text-xl md:text-3xl font-lato">

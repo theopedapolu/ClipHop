@@ -1,5 +1,6 @@
 import React, {useEffect, useState, useRef, useMemo} from 'react';
 import Clock from './Clock';
+import Message from './Message';
 import DeviceGroup from './DeviceGroup';
 import {DndContext, useDndMonitor} from '@dnd-kit/core';
 import DndIcon from './DnDIcon';
@@ -8,7 +9,7 @@ import UpdateButton from './UpdateButton';
 import Info from './Info';
 import useSize from './useSize';
 
-const Message = Object.freeze({
+const MessageType = Object.freeze({
     CONNECTION: 'Connection',
     ADD_DEVICE: 'Add Device',
     ADD_GROUPS: 'Add Groups',
@@ -26,7 +27,7 @@ const colors = ['bg-emerald-500','bg-blue-500','bg-rose-500','bg-amber-500','bg-
 const PING_INTERVAL = 10000
 
 // ClipHop Server URL
-const CLIPHOP_SERVER = 'wss://ws.cliphop.net:443';
+const CLIPHOP_SERVER = 'wss://ws.cliphop.net';
 
 
 // Generates positions for device groups based on the number of groups
@@ -50,7 +51,7 @@ function generatePositions(numGroups,width) {
 function Crown() {
     // Hooks & State
     const [thisDevice,setThisDevice] = useState({
-        name:"Caraxes",
+        name:"",
         type:"",
         id:1,
         syncButtonColor:'green'
@@ -67,9 +68,9 @@ function Crown() {
     useEffect(() => {
         const ws = new WebSocket(CLIPHOP_SERVER);
         connection.current.ws = ws
-        ws.onopen = () => {sendMessage(Message.CONNECTION,{text:"Device connected successfully"})};
+        ws.onopen = () => {sendMessage(MessageType.CONNECTION,{text:"Device connected successfully"})};
         ws.onmessage = handleMessage;
-        // const interval = setInterval(() => {sendMessage(Message.PING,{text:'heartbeat'})}, PING_INTERVAL)
+        // const interval = setInterval(() => {sendMessage(MessageType.PING,{text:'heartbeat'})}, PING_INTERVAL)
         // ws.onclose = () => {
         //     clearInterval(interval)
         //     ws.close()
@@ -157,7 +158,7 @@ function Crown() {
             if (connection.current.clipboard !== data) {
                 connection.current.clipboard = data
                 const message = {groupId:connection.current.id,clipboard:connection.current.clipboard}
-                await sendMessage(Message.UPDATE_CLIPBOARD,message)
+                await sendMessage(MessageType.UPDATE_CLIPBOARD,message)
                 console.log("Updated clipboard message sent",message)
             }
         } catch(err) {
@@ -181,27 +182,27 @@ function Crown() {
         const {type,message} = JSON.parse(event.data);
         console.log(type,message)
         switch(type) {
-            case Message.ADD_GROUPS:
+            case MessageType.ADD_GROUPS:
                 addGroups(message.devices);
                 setThisDevice({name:message.name,type:message.type,id:message.id,syncButtonColor:'green'})
                 break;
-            case Message.ADD_DEVICE:
+            case MessageType.ADD_DEVICE:
                 addDevice(message.groupId,message.name,message.type)
                 break;
-            case Message.MERGE_GROUPS:
+            case MessageType.MERGE_GROUPS:
                 if (connection.current.id === message.oldId && connection.current.clipboard !== message.newClipboard) {
                     connection.current.clipboard = message.newClipboard;
                     setThisDevice((d) => ({...d,id:message.newId,syncButtonColor:'red'}))
                 }
                 mergeGroups(message.oldId,message.newId);
                 break;
-            case Message.UPDATE_CLIPBOARD:
+            case MessageType.UPDATE_CLIPBOARD:
                 if (connection.id === message.groupId && connection.current.clipboard !== message.newClipboard) {
                     connection.current.clipboard = message.newClipboard;
                     setThisDevice((d) => ({...d,syncButtonColor:'red'}))
                 }
                 break;
-            case Message.CLOSE_DEVICE:
+            case MessageType.CLOSE_DEVICE:
                 removeDevice(message.name);
                 break;   
             default:
@@ -227,13 +228,14 @@ function Crown() {
             }))
         }
     }
+    
 
     // Handles the end of a drag event and merges groups if necessary
     function handleDragEnd(event) {
         if (event.over !== null && event.over.id !== event.active.id) {
             mergeGroups(event.active.id,event.over.id);
             let message = {oldId:event.active.id,newId:event.over.id};
-            sendMessage(Message.MERGE_GROUPS, message);
+            sendMessage(MessageType.MERGE_GROUPS, message);
         }
     }
 
@@ -250,8 +252,20 @@ function Crown() {
         return deviceGroups ? generatePositions(deviceGroups.length,windowSize[1]) : []
     }, [deviceGroups,windowSize])
 
+    const getMessageDispatch = () => {
+        if (deviceGroups.filter(group => group.devices.length >= 2).length >= 1) {
+            return "Click UPDATE to update the group's clipboard based on this device and SYNC to copy the updated clipboard onto this device"
+        } else if (deviceGroups.length >= 2) {
+            return "Drag and Drop devices onto each other to form clipboard sync groups"
+        } else {
+            return "Open ClipHop on another device to sync your clipboards"
+        }
+    }
+
     // Rendered JSX
     return (
+        <>
+        <Message dispatch={getMessageDispatch()}/>
         <div className='flex flex-col place-content-evenly place-items-center md:flex-row md:mt-10'>
             {windowSize[1] < 768 ? (
                 <>
@@ -264,7 +278,7 @@ function Crown() {
 
             ): (
                 <>
-                    <Info outerDivClasses='order-1 scale-75 md:scale-100' name={thisDevice.name+thisDevice.id} color={colors[thisDevice.id-1]} type='E'/>
+                    <Info outerDivClasses='order-1 scale-75 md:scale-100' name={thisDevice.name} color={colors[thisDevice.id-1]} type='E'/>
                     <div className='order-3 flex flex-row place-content-evenly ml-5 md:flex-col md:ml-0'>
                         <SyncButton outerDivClasses='md:my-12' color={thisDevice.syncButtonColor} onClick={updateClipboard}/>
                         <UpdateButton onClick={updateGroupClipboard}/>
@@ -285,8 +299,8 @@ function Crown() {
                 })}
                 </DndContext>   
             </div>
-
         </div>
+        </>
     )
 }
 
