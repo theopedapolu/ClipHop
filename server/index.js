@@ -26,16 +26,15 @@ class ClipHopServer {
         this.ipToClipboard = new Map();
 
         // Check for pings from clients periodically
-        const interval = setInterval(() => {
-            console.log('Checking dead connections:')
-            this.wss.clients.forEach((ws) => {
-                if (!ws.isAlive) {
-                    this.onClose(ws)
-                } else {
-                    ws.isAlive = false
-                }
-            })
-        },HEARTBEAT_INTERVAL) 
+        // const interval = setInterval(() => {
+        //     this.wss.clients.forEach((ws) => {
+        //         if (!ws.isAlive) {
+        //             this.onClose(ws)
+        //         } else {
+        //             ws.isAlive = false
+        //         }
+        //     })
+        // },HEARTBEAT_INTERVAL) 
         this.wss.on('close',()=>{clearInterval(interval)})
         //this.wss.on('headers', (headers, request) => this.checkHeaders(headers, request))
         console.log('ClipHop is running on port', port)
@@ -50,7 +49,6 @@ class ClipHopServer {
     }
 
     onMessage(device, event) {
-        console.log('This is the event',event.data);
         const {type, message} = JSON.parse(event.data);
         let DevicesList;
         let newDevicesList;
@@ -101,7 +99,6 @@ class ClipHopServer {
 
     onClose(ws) {
         // Remove device from stored state
-        console.log('Closing device ', ws.name)
         if (!this.ipToDevicesList.has(ws.ip)) {
             return
         }
