@@ -6,11 +6,11 @@ import Android from './icons/Android.js';
 import PC from './icons/PC.js';
 
 const iconMap = {
-    'A': Android,
-    'B':iPad,
-    'C':iPhone,
-    'D':Mac,
-    'E':PC
+    'Android': Android,
+    'iPad':iPad,
+    'iPhone':iPhone,
+    'Mac':Mac,
+    'PC':PC
 }
 
 function DeviceGroup({devices, color="bg-green-500"}) {

@@ -4,8 +4,8 @@ const colors = ['bg-emerald-500','bg-blue-500','bg-rose-500','bg-amber-500','bg-
 
 // Generates positions for device groups based on the number of groups
 function generatePositions(numGroups,width) {
-    let radius = width >= 768 ? 13 : Number(((13/35)*width/16).toFixed(2))
-    let originShift = width >= 768 ? 13.5 : Number(((11.5/35)*width/16).toFixed(2))
+    let radius = width >= 768 ? 13 : Number(((13.75/35)*width/16))
+    let originShift = width >= 768 ? 13.5 : Number(((11.75/35)*width/16))
     let positions = [];
     if (numGroups === 1) {
         positions.push([originShift.toString(),originShift.toString()]);

@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useRef, useMemo} from 'react';
+import React, {useEffect, useRef} from 'react';
 import Clock from './Clock';
 import Message from './Message';
 import DeviceGroup from './DeviceGroup';
@@ -25,6 +25,7 @@ const MessageType = Object.freeze({
     PING: 'Ping',
     CLOSE_DEVICE: 'Close Device'
 })
+  
 
 // Main component for managing device groups and WebSocket connection
 function Crown() {
@@ -143,7 +144,8 @@ function Crown() {
 
     const getMessageDispatch = () => {
         if (deviceGroups.filter(group => group.devices.length >= 2).length >= 1) {
-            return "Click UPDATE to update the group's clipboard based on this device and SYNC to copy the updated clipboard onto this device"
+            return window.innerWidth <= 768 ? "Click UPDATE to update the group's clipboard based on this device and SYNC to copy the updated clipboard onto this device":
+            <p>Click UPDATE to update the group's clipboard based on this device<br/>Click SYNC to copy the updated clipboard onto this device</p>
         } else if (deviceGroups.length >= 2) {
             return "Drag and Drop devices onto each other to form clipboard sync groups"
         } else {
@@ -156,9 +158,9 @@ function Crown() {
         <div className='md:space-y-16'>
         <Message dispatch={getMessageDispatch()}/>
         <div className='flex flex-col w-screen place-content-evenly place-items-center md:flex-row'>
-            {(window.innerHeight/window.innerWidth >= 1.5) ? (
+            {window.innerWidth <= 768 ? (
                 <>
-                <Info outerDivClasses='mx-auto order-1 scale-75' name={thisDevice.name} color={colors[thisDevice.id-1]} type='E'/>
+                <Info outerDivClasses='mx-auto order-1 scale-75' name={thisDevice.name} color={colors[thisDevice.id-1]} type={thisDevice.type ? thisDevice.type : 'Mac'}/>
                 <div className='order-3 flex flex-row place-content-evenly ml-5' style={{marginTop:`${window.innerWidth+10}px`}}>
                     <SyncButton outerDivClasses='mx-auto scale-75' color={thisDevice.syncButtonColor} onClick={updateClipboard}/>
                     <UpdateButton outerDivClasses='mx-auto scale-75' onClick={updateGroupClipboard}/>
@@ -167,7 +169,7 @@ function Crown() {
 
             ): (
                 <>
-                    <Info outerDivClasses='order-1 scale-75 md:scale-100' name={thisDevice.name} color={colors[thisDevice.id-1]} type='E'/>
+                    <Info outerDivClasses='order-1 scale-75 md:scale-100' name={thisDevice.name} color={colors[thisDevice.id-1]} type={thisDevice.type ? thisDevice.type : 'Mac'}/>
                     <div className='order-3 flex flex-row place-content-evenly ml-5 md:flex-col md:ml-0'>
                         <SyncButton outerDivClasses='md:my-12' color={thisDevice.syncButtonColor} onClick={updateClipboard}/>
                         <UpdateButton onClick={updateGroupClipboard}/>
@@ -181,7 +183,7 @@ function Crown() {
                 <Monitor/>
                 {deviceGroups && deviceGroups.map((group,idx) => {
                     return (
-                    <DndIcon iconId={group.id} key={idx} top={positions[idx][0]} left={positions[idx][1]} bubble={group.bubble}>
+                    <DndIcon iconId={group.id} key={idx} top={positions[idx][0]} left={positions[idx][1]} bubble={group.devices.length > 1}>
                     <DeviceGroup devices={group.devices} color={group.color}/>
                     </DndIcon>
                     )

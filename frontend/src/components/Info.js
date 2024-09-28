@@ -6,14 +6,14 @@ import Android from './icons/Android.js';
 import PC from './icons/PC.js';
 
 const iconMap = {
-    'A': Android,
-    'B':iPad,
-    'C':iPhone,
-    'D':Mac,
-    'E':PC
+    'Android': Android,
+    'iPad':iPad,
+    'iPhone':iPhone,
+    'Mac':Mac,
+    'PC':PC
 }
 
-function Info({outerDivClasses,name,type='A',color='bg-green-500'}) {
+function Info({outerDivClasses,name,type='Mac',color='bg-green-500'}) {
     const DeviceIcon = iconMap[type];
     return (
         <div className={`flex flex-col place-items-center ${outerDivClasses} font-poppins text-lg text-nowrap`}>

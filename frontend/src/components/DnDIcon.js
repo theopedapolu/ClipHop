@@ -24,7 +24,7 @@ function DndIcon({iconId,bubble,children,top,left}) {
                 setDropRef(node);
               }}
         style={{...style,position:'absolute',top:`${top}rem`,left:`${left}rem`,touchAction:'none'}} 
-        className={`rounded-full p-6 ${bubble ? 'bubble-group' : ''}`}
+        className={`scale-75 rounded-full p-6 ${bubble ? 'bubble-group' : ''} md:scale-100`}
         {...listeners}
         {... attributes} >
             {children}
