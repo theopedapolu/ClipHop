@@ -18,6 +18,42 @@ const Message = Object.freeze({
 
 const HEARTBEAT_INTERVAL= 21000
 
+function getDeviceAndBrowserInfo(userAgent) {
+    let deviceType = 'Unknown';
+    let browserType = 'Unknown';
+  
+    // Detect Device Type
+    if (/iPhone/.test(userAgent)) {
+      deviceType = 'iPhone';
+    } else if (/iPad/.test(userAgent)) {
+      deviceType = 'iPad';
+    } else if (/Android/.test(userAgent)) {
+      deviceType = 'Android';
+    } else if (/Macintosh/.test(userAgent) && !(/iPhone|iPad/.test(userAgent))) {
+      deviceType = 'Mac';
+    } else if (/Windows/.test(userAgent)) {
+      deviceType = 'PC';
+    }
+  
+    // Detect Browser Type
+    if (/Chrome/.test(userAgent) && !/Edg/.test(userAgent)) {
+      browserType = 'Chrome';
+    } else if (/Safari/.test(userAgent) && !/Chrome/.test(userAgent)) {
+      browserType = 'Safari';
+    } else if (/Firefox/.test(userAgent)) {
+      browserType = 'Firefox';
+    } else if (/Edg/.test(userAgent)) {
+      browserType = 'Edge';
+    } else if (/MSIE|Trident/.test(userAgent)) {
+      browserType = 'Internet Explorer';
+    }
+  
+    return {
+      type: deviceType,
+      browser: browserType
+    };
+}
+
 class ClipHopServer {
     constructor(port) {
         this.wss = new WebSocketServer({port:port,clientTracking:true})
@@ -67,9 +103,9 @@ class ClipHopServer {
                 device.socket.groupId = newId
                 DevicesList.push(device)
                 // Send messages
-                newDevicesList = DevicesList.map(dev => ({groupId:dev.socket.groupId,name:dev.socket.name,type:'A'}))
-                let newMessage = {groupId:newId,name:device.socket.name,type:'A'}
-                this.broadcastMessage(device.socket,Message.ADD_DEVICE,newMessage,Message.ADD_GROUPS,{name:device.socket.name,type:device.type,id:newId,devices:newDevicesList});
+                newDevicesList = DevicesList.map(dev => ({groupId:dev.socket.groupId,name:dev.socket.name,type:dev.socket.type}))
+                let newMessage = {groupId:newId,name:device.socket.name,type:device.socket.type}
+                this.broadcastMessage(device.socket,Message.ADD_DEVICE,newMessage,Message.ADD_GROUPS,{name:device.socket.name,type:device.socket.type,id:newId,devices:newDevicesList});
                 break;
             case Message.MERGE_GROUPS:
                 // message = {oldId, newId}
@@ -153,8 +189,10 @@ class Device {
         this.socket.name = uniqueNamesGenerator(config);
         this.socket.groupId = 0;
         this.socket.ip = request.socket.remoteAddress;
-        this.userAgent = request.headers['user-agent'];
         this.connectionTime = new Date();
+        const {type, browser} = getDeviceAndBrowserInfo(request.headers['user-agent'])
+        this.socket.type = type
+        this.socket.browser = browser
     }
 }
 
