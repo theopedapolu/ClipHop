@@ -26,7 +26,6 @@ function useDevices() {
         id:1,
         syncButtonColor:'green'
     });
-
     const [deviceGroups,setDeviceGroups] = useState([])
     /*
         deviceGroups state handlers

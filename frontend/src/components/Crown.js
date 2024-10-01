@@ -13,7 +13,8 @@ import useDevices from './useDevices';
 const colors = ['bg-emerald-500','bg-blue-500','bg-rose-500','bg-amber-500','bg-violet-500'];
 
 // ClipHop Server URL
-const CLIPHOP_SERVER = 'wss://ws.cliphop.net'
+// const CLIPHOP_SERVER = 'wss://ws.cliphop.net'
+const CLIPHOP_SERVER = 'ws://localhost:8080'
 
 const MessageType = Object.freeze({
     CONNECTION: 'Connection',
@@ -155,8 +156,8 @@ function Crown() {
         <div className='flex flex-col w-screen place-content-evenly place-items-center md:flex-row'>
             {window.innerWidth <= 768 ? (
                 <>
-                <Info outerDivClasses='mx-auto order-1 scale-75' name={thisDevice.name} color={colors[thisDevice.id-1]} type={thisDevice.type ? thisDevice.type : 'Mac'}/>
-                <div className='order-3 flex flex-row place-content-evenly ml-5' style={{marginTop:`${window.innerWidth+10}px`}}>
+                <Info outerDivClasses='mx-auto order-1 scale-75 fade-in' name={thisDevice.name} color={colors[thisDevice.id-1]} type={thisDevice.type ? thisDevice.type : 'Mac'}/>
+                <div className='order-3 flex flex-row place-content-evenly ml-5 fade-in' style={{marginTop:`${window.innerWidth+10}px`}}>
                     <SyncButton outerDivClasses='mx-auto scale-75' color={thisDevice.syncButtonColor} onClick={updateClipboard}/>
                     <UpdateButton outerDivClasses='mx-auto scale-75' onClick={updateGroupClipboard}/>
                 </div>
@@ -164,9 +165,9 @@ function Crown() {
 
             ): (
                 <>
-                    <Info outerDivClasses='order-1 scale-75 md:scale-100' name={thisDevice.name} color={colors[thisDevice.id-1]} type={thisDevice.type ? thisDevice.type : 'Mac'}/>
-                    <div className='order-3 flex flex-row place-content-evenly ml-5 md:flex-col md:ml-0'>
-                        <SyncButton outerDivClasses='md:my-12' color={thisDevice.syncButtonColor} onClick={updateClipboard}/>
+                    <Info outerDivClasses='order-1 fade-in' name={thisDevice.name} color={colors[thisDevice.id-1]} type={thisDevice.type ? thisDevice.type : 'Mac'}/>
+                    <div className='order-3 flex flex-col place-content-evenly fade-in'>
+                        <SyncButton outerDivClasses='my-12' color={thisDevice.syncButtonColor} onClick={updateClipboard}/>
                         <UpdateButton onClick={updateGroupClipboard}/>
                     </div>
                 </>
