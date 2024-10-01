@@ -13,8 +13,7 @@ import useDevices from './useDevices';
 const colors = ['bg-emerald-500','bg-blue-500','bg-rose-500','bg-amber-500','bg-violet-500'];
 
 // ClipHop Server URL
-// const CLIPHOP_SERVER = 'wss://ws.cliphop.net'
-const CLIPHOP_SERVER = 'ws://localhost:8080'
+const CLIPHOP_SERVER = 'wss://ws.cliphop.net'
 
 const MessageType = Object.freeze({
     CONNECTION: 'Connection',
