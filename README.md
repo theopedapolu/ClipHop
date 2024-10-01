@@ -14,9 +14,19 @@ Utility app to synchronize clipboards across multiple devices on the same local 
 - [ws](https://github.com/websockets/ws) (Node.js library used to simplify the creation of the WebSocket Server)
 
 ## How To Use
-
+1. Open the [ClipHop](https://www.cliphop.net/) website on every device whose clipboard you want to sync with other devices. Each device connected to the app on your **local network** will be shown on the UI
+2. Drag and drop devices on top of each other to form **Sync Groups**, a group of devices whose clipboards will be automatically synchronized by the app. It is useful to think of the devices in these groups as having one shared clipboard. You can have multiple Sync Groups, each with as many devices as you want!
+3. Click the UPDATE button to update the shared clipboard of the group your device is in, and click the SYNC button to copy the updated group clipboard to your device. A **RED** SYNC button means there are updates to the group clipboard that this device has not yet copied over, so SYNC should be clicked. A **GREEN** SYNC button means this device's clipboard is up-to-date with the current group clipboard. Note that clicking UPDATE on a device causes a RED SYNC button for all other devices in the same group and dragging a device/group onto another device/group causes a RED SYNC button for the device that is dragged. 
+   
 
 ## FAQs
+1. **What happens behind the scenes?**  
+   Every time a device connects to the app, it forms a WebSocket connection with the app's WebSocket Server (hosted at *ws.cliphop.net*). This server handles all UI updates and clipboard sharing    across devices in the local network. When a group's clipboard is updated, this information passes to the server which then relays it to all the other devices in the same group. 
+2. **What about privacy? Is my information shared with any third parties?**
+3. **How can I be sure my information is secure?**
+   
+   
+   
 
 
 ## Report Bugs/Give Feedback
