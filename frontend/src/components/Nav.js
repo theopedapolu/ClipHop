@@ -17,7 +17,7 @@ function Nav() {
                     </a>
                 </li>
                 <li className=''>
-                    <a className='block p-0 hover:color-amber-400' href="#">
+                    <a className='block p-0 hover:color-amber-400' href="https://github.com/theopedapolu/ClipHop?tab=readme-ov-file#report-bugsgive-feedback">
                         <FontAwesomeIcon icon={faBug} size='2x' className='text-zinc-700 hover:text-green-600'/>
                     </a>
                 </li>

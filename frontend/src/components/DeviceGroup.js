@@ -13,18 +13,32 @@ const iconMap = {
     'PC':PC
 }
 
+function getGridParams(devices) {
+    // Find num rows and num cols
+    if (devices.length === 1) {
+        return {numRows:1,numCols:1}
+    } else if (devices.length === 2) {
+        return {numRows:1,numCols:2}
+    } else {
+        return {numRows:2,numCols:2}
+    }
+
+}
+
+
 function DeviceGroup({devices, color="bg-green-500"}) {
+    const {numRows,numCols} = getGridParams(devices)
     return (
-        <>
-            {devices.map(device => {
+        <div className='grid place-items-center w-[10rem] p-3' style={{gridTemplateRows:`repeat(${numRows}, minmax(0, 1fr))`,gridTemplateColumns:`repeat(${numCols}, minmax(0, 1fr))`}}>
+            {devices.map((device,idx) => {
                 const DeviceIcon = iconMap[device.type];
                 return (
-                    <div key={device.name} className={`rounded-full flex items-center justify-center ${color} p-3`}>
+                    <span key={device.name} className={`${devices.length===3 ? (idx===2 ? 'col-span-2':'-mb-5'):''} rounded-full ${color} p-3`}>
                         <DeviceIcon/>
-                    </div>
+                    </span>
                 )
             })}
-        </>
+        </div>
     )
 }
 

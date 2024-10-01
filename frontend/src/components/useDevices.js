@@ -4,8 +4,10 @@ const colors = ['bg-emerald-500','bg-blue-500','bg-rose-500','bg-amber-500','bg-
 
 // Generates positions for device groups based on the number of groups
 function generatePositions(numGroups,width) {
-    let radius = width >= 768 ? 13 : Number(((13.75/35)*width/16))
-    let originShift = width >= 768 ? 13.5 : Number(((11.75/35)*width/16))
+    // let radius = width >= 768 ? 13 : Number(((13.75/35)*width/16))
+    // let originShift = width >= 768 ? 13.5 : Number(((11.75/35)*width/16))
+    let radius = width >= 768 ? 13 : Number(((12/35)*width/16))
+    let originShift = width >= 768 ? 17.5 : Number(((17/35)*width/16))
     let positions = [];
     if (numGroups === 1) {
         positions.push([originShift.toString(),originShift.toString()]);
@@ -26,8 +28,8 @@ function useDevices() {
         id:1,
         syncButtonColor:'green'
     });
-    const [deviceGroups, setDeviceGroups] = useState([])
-
+    // const [deviceGroups, setDeviceGroups] = useState([{id:1,color:colors[0],devices:[{name:'Vermithor1',type:'Mac'},{name:'Vermithor2',type:'Mac'},{name:'Vermithor3',type:'Mac'}]},{id:2,color:colors[1],devices:[{name:'Vermithor1',type:'Mac'},{name:'Vermithor2',type:'Mac'},{name:'Vermithor3',type:'Mac'}]}])
+    const [deviceGroups,setDeviceGroups] = useState([])
     /*
         deviceGroups state handlers
     */
@@ -47,7 +49,7 @@ function useDevices() {
         for (let i=1; i <= maxId; ++i) {
             if (groupsMap.has(i)) {
                 let groupDeviceList = groupsMap.get(i)
-                newDeviceGroups.push({id:i, color:colors[i-1], devices:groupDeviceList, bubble:groupDeviceList.length > 1})
+                newDeviceGroups.push({id:i, color:colors[i-1], devices:groupDeviceList})
             }
         }
         setDeviceGroups(newDeviceGroups);
@@ -56,7 +58,7 @@ function useDevices() {
     // Adds a new device to the device groups
     const addDevice = (newId, name,type) => {
         setDeviceGroups(deviceGroups => {
-            let newDeviceGroups = [...deviceGroups, {id:newId, color:colors[newId-1], devices:[{name:name,type:type}], bubble:false}].sort((a,b) => (a.id-b.id))
+            let newDeviceGroups = [...deviceGroups, {id:newId, color:colors[newId-1], devices:[{name:name,type:type}]}].sort((a,b) => (a.id-b.id))
             return newDeviceGroups
         });
     };
@@ -69,7 +71,7 @@ function useDevices() {
                 if (group.id === id2) {
                     const group1 = deviceGroups.find(g => g.id === id1);
                     const mergedDevices = [...group.devices, ...group1.devices];
-                    updatedGroups.push({...group, devices: mergedDevices, bubble:mergedDevices.length > 1});
+                    updatedGroups.push({...group, devices: mergedDevices});
                 } else if (group.id !== id1) { // Skip group id1 since it will be merged later
                     updatedGroups.push(group);
                 }
@@ -94,15 +96,15 @@ function useDevices() {
 
     const deviceDragOver = (event) => {
         if (event.over == null || event.over.id === event.active.id) {
-            setDeviceGroups(deviceGroups.map((group) => {return {...group,color:colors[group.id-1],bubble:group.devices.length > 1}}))
+            setDeviceGroups(deviceGroups.map((group) => {return {...group,color:colors[group.id-1]}}))
         } else {
             setDeviceGroups(deviceGroups.map((group) => {
                 if (group.id === event.active.id) {
-                    return {...group,color:colors[event.over.id-1],bubble:group.devices.length > 1}
+                    return {...group,color:colors[event.over.id-1]}
                 } else if (group.id === event.over.id) { 
-                    return {...group,color:colors[event.over.id-1],bubble:true}
+                    return {...group,color:colors[event.over.id-1]}
                 } else {
-                    return {...group,color:colors[group.id-1],bubble:group.devices.length > 1}
+                    return {...group,color:colors[group.id-1]}
                 }
             }))
         }

@@ -9,7 +9,7 @@ function DndIcon({iconId,bubble,children,top,left}) {
     })
 
     const style = transform ? {
-        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`
+        transform: `translate3d(-50%, -50%, 0) translate3d(${transform.x}px, ${transform.y}px, 0)`
     }
     : {};
 
@@ -24,7 +24,7 @@ function DndIcon({iconId,bubble,children,top,left}) {
                 setDropRef(node);
               }}
         style={{...style,position:'absolute',top:`${top}rem`,left:`${left}rem`,touchAction:'none'}} 
-        className={`scale-75 rounded-full p-6 ${bubble ? 'bubble-group' : ''} md:scale-100`}
+        className={`scale-75 ${bubble ? 'bubble-group':''} md:scale-100 -translate-x-1/2 -translate-y-1/2`}
         {...listeners}
         {... attributes} >
             {children}
