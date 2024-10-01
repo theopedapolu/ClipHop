@@ -4,8 +4,6 @@ const colors = ['bg-emerald-500','bg-blue-500','bg-rose-500','bg-amber-500','bg-
 
 // Generates positions for device groups based on the number of groups
 function generatePositions(numGroups,width) {
-    // let radius = width >= 768 ? 13 : Number(((13.75/35)*width/16))
-    // let originShift = width >= 768 ? 13.5 : Number(((11.75/35)*width/16))
     let radius = width >= 768 ? 13 : Number(((12/35)*width/16))
     let originShift = width >= 768 ? 17.5 : Number(((17/35)*width/16))
     let positions = [];
@@ -28,7 +26,7 @@ function useDevices() {
         id:1,
         syncButtonColor:'green'
     });
-    // const [deviceGroups, setDeviceGroups] = useState([{id:1,color:colors[0],devices:[{name:'Vermithor1',type:'Mac'},{name:'Vermithor2',type:'Mac'},{name:'Vermithor3',type:'Mac'}]},{id:2,color:colors[1],devices:[{name:'Vermithor1',type:'Mac'},{name:'Vermithor2',type:'Mac'},{name:'Vermithor3',type:'Mac'}]}])
+
     const [deviceGroups,setDeviceGroups] = useState([])
     /*
         deviceGroups state handlers

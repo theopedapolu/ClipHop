@@ -13,8 +13,7 @@ import useDevices from './useDevices';
 const colors = ['bg-emerald-500','bg-blue-500','bg-rose-500','bg-amber-500','bg-violet-500'];
 
 // ClipHop Server URL
-// const CLIPHOP_SERVER = 'wss://ws.cliphop.net'
-const CLIPHOP_SERVER = 'ws://localhost:8080'
+const CLIPHOP_SERVER = 'wss://ws.cliphop.net'
 
 const MessageType = Object.freeze({
     CONNECTION: 'Connection',
@@ -54,7 +53,6 @@ function Crown() {
     // State Change Helper methods
     // Updates Clipboard
     async function updateClipboard() {
-        console.log('clipboard before',connection.current.clipboard)
         await navigator.clipboard.writeText(connection.current.clipboard)
         setThisDevice((d) => ({...d,syncButtonColor:'green'}))
     }
@@ -63,12 +61,10 @@ function Crown() {
    async function updateGroupClipboard() {
         try {
             const data = await navigator.clipboard.readText()
-            console.log(connection.current.clipboard,data)
             if (connection.current.clipboard !== data) {
                 connection.current.clipboard = data
                 const message = {groupId:connection.current.id,clipboard:connection.current.clipboard}
                 await sendMessage(MessageType.UPDATE_CLIPBOARD,message)
-                console.log("Updated clipboard message sent",message)
             }
         } catch(err) {
             console.error("Could not read clipboard")
@@ -79,7 +75,6 @@ function Crown() {
     async function sendMessage(type,message) {
         const data = {type, message}
         if (connection.current.ws && connection.current.ws.readyState === WebSocket.OPEN) {
-            console.log('Sent Message',data)
             connection.current.ws.send(JSON.stringify(data));
         } else {
             console.warn('WebSocket is not open. Cannot send message.');
@@ -89,7 +84,6 @@ function Crown() {
     // Handles incoming WebSocket messages and updates state accordingly
     function handleMessage(event) {
         const {type,message} = JSON.parse(event.data);
-        console.log(type,message)
         switch(type) {
             case MessageType.ADD_GROUPS:
                 addGroups(message.devices);

@@ -14,7 +14,7 @@ function DndIcon({iconId,bubble,children,top,left}) {
     : {};
 
     // Droppable state
-    const {isOver,setNodeRef: setDropRef} = useDroppable({
+    const {setNodeRef: setDropRef} = useDroppable({
         id:iconId
     });
 
