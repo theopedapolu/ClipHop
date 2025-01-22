@@ -22,8 +22,6 @@ Utility app to synchronize clipboards across multiple devices on the same local 
 ## FAQs
 1. **What happens behind the scenes?**  
    Every time a device connects to the app, it forms a WebSocket connection with the app's WebSocket Server (hosted at *ws.cliphop.net*). This server handles all UI updates and clipboard sharing    across devices in the local network. When a group's clipboard is updated, this information passes to the server which then relays it to all the other devices in the same group. 
-2. **What about privacy? Is my information shared with any third parties?**
-3. **How can I be sure my information is secure?**
    
    
    
